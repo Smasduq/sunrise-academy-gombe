@@ -1,0 +1,108 @@
+.section {
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 50%, var(--color-primary-light) 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-10);
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .inner { grid-template-columns: 1fr 1fr; }
+}
+
+.text {}
+
+.badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  color: white;
+  line-height: 1.2;
+  margin-bottom: var(--space-4);
+}
+
+.desc {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.7;
+  margin-bottom: var(--space-8);
+  max-width: 440px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.imageGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.imageWrap {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  background: rgba(255,255,255,0.1);
+}
+
+.imageWrap:nth-child(1) { height: 180px; }
+.imageWrap:nth-child(2) { height: 130px; margin-top: var(--space-6); }
+.imageWrap:nth-child(3) { height: 130px; }
+.imageWrap:nth-child(4) { height: 180px; margin-top: calc(-1 * var(--space-6)); }
+
+@media (max-width: 479px) {
+  .imageGrid { grid-template-columns: 1fr; }
+  .imageWrap { height: 160px !important; margin-top: 0 !important; }
+}
+
+.galleryImage {
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.imageWrap:hover .galleryImage { transform: scale(1.05); }
+
+.viewBtn {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .viewBtn { display: inline-flex; }
+}

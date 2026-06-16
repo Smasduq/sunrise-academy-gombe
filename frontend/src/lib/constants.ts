@@ -1,0 +1,10 @@
+export const SCHOOL_NAME = 'Sunrise Academy Gombe';
+export const SCHOOL_TAGLINE = 'Nurturing Minds, Shaping Futures';
+export const SCHOOL_ADDRESS = 'Behind Alfijir Plaza, Along Kurba Road, Akko LGA, Gombe State, Nigeria';
+export const SCHOOL_PHONE_1 = '+234 803 000 0000';
+export const SCHOOL_PHONE_2 = '+234 806 000 0000';
+export const SCHOOL_EMAIL = 'info@sunriseacademygombe.edu.ng';
+export const SCHOOL_WHATSAPP = '+2348030000000';
+export const SCHOOL_FACEBOOK = 'https://facebook.com/sunriseacademygombe';
+export const SCHOOL_TWITTER = 'https://twitter.com/sunriseacademy';
+export const SCHOOL_INSTAGRAM = 'https://instagram.com/sunriseacademygombe';

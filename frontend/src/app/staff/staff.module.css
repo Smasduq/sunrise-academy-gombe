@@ -1,0 +1,332 @@
+.page {
+  min-height: 100vh;
+}
+
+.pageBanner {
+  position: relative;
+  height: 340px;
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  margin-top: var(--nav-height);
+  padding-bottom: var(--space-12);
+}
+
+.bannerOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(20, 184, 166, 0.15) 0%, transparent 70%);
+  z-index: 1;
+}
+
+.bannerContent {
+  position: relative;
+  z-index: 2;
+  color: var(--color-white);
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.bannerTitle {
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 800;
+  color: var(--color-white);
+  margin-bottom: var(--space-2);
+}
+
+.bannerSub {
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: var(--color-primary-100);
+  max-width: 600px;
+}
+
+.sectionHeader {
+  margin-bottom: var(--space-12);
+}
+
+/* Principal Section */
+.principalSection {
+  background-color: var(--color-bg);
+}
+
+.principalCard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-8);
+  background: var(--color-bg);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-border);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.principalCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.12);
+}
+
+@media (min-width: 768px) {
+  .principalCard {
+    grid-template-columns: 380px 1fr;
+    gap: var(--space-12);
+  }
+}
+
+.principalImgWrap {
+  position: relative;
+  height: 400px;
+  background-color: var(--color-bg-alt);
+}
+
+@media (min-width: 768px) {
+  .principalImgWrap {
+    height: 100%;
+    min-height: 450px;
+  }
+}
+
+.principalImg {
+  object-fit: cover;
+}
+
+.principalInfo {
+  padding: var(--space-8) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .principalInfo {
+    padding: var(--space-12) var(--space-10) var(--space-12) 0;
+  }
+}
+
+.principalRole {
+  display: inline-block;
+  color: var(--color-secondary-dark);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-2);
+}
+
+.principalName {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+}
+
+.principalQual {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin-bottom: var(--space-6);
+}
+
+.principalBio {
+  font-size: 1.05rem;
+  color: var(--color-text);
+  line-height: 1.8;
+  margin-bottom: var(--space-8);
+}
+
+.principalStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+
+.pStat {
+  text-align: left;
+}
+
+.pStatValue {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.1;
+  margin-bottom: var(--space-1);
+}
+
+.pStatLabel {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 555;
+}
+
+/* Administrative Section */
+.adminSection {
+  background-color: var(--color-bg-alt);
+}
+
+.adminGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-8);
+}
+
+.staffCard {
+  background: var(--color-bg);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-base);
+}
+
+.staffCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.cardImgWrap {
+  position: relative;
+  height: 320px;
+  width: 100%;
+}
+
+.cardImg {
+  object-fit: cover;
+}
+
+.cardBody {
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.cardName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+
+.cardRole {
+  display: block;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: var(--space-2);
+}
+
+.cardQual {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Teachers Section */
+.teachersSection {
+  background-color: var(--color-bg);
+}
+
+.teachersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-8);
+}
+
+.teacherCard {
+  background: var(--color-bg);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-base);
+}
+
+.teacherCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.teacherImgWrap {
+  position: relative;
+  height: 280px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.teacherImg {
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.teacherCard:hover .teacherImg {
+  transform: scale(1.05);
+}
+
+.teacherOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+  padding: var(--space-4);
+  display: flex;
+  align-items: flex-end;
+}
+
+.teacherDept {
+  color: var(--color-white);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(15, 118, 110, 0.85);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.teacherBody {
+  padding: var(--space-5);
+}
+
+.teacherName {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+
+.teacherRole {
+  display: block;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: var(--space-2);
+}
+
+.teacherQual {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Join Team Section */
+.joinSection {
+  background: linear-gradient(135deg, var(--color-primary-50) 0%, rgba(20, 184, 166, 0.15) 100%);
+  border-top: 1px solid var(--color-primary-100);
+  border-bottom: 1px solid var(--color-primary-100);
+}
+
+[data-theme='dark'] .joinSection {
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08) 0%, rgba(15, 118, 110, 0.03) 100%);
+  border-color: rgba(15, 118, 110, 0.2);
+}

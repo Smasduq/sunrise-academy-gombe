@@ -1,0 +1,250 @@
+.page {}
+
+.pageBanner {
+  position: relative;
+  height: 340px;
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  margin-top: var(--nav-height);
+}
+
+.bannerOverlay {
+  position: absolute;
+  inset: 0;
+  background: url('/images/program-secondary.svg') center/cover no-repeat;
+  opacity: 0.15;
+}
+
+.bannerContent {
+  position: relative;
+  z-index: 1;
+  padding-bottom: var(--space-12);
+}
+
+.bannerTitle {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 800;
+  color: white;
+  margin-bottom: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.bannerSub {
+  font-size: 1.05rem;
+  color: rgba(255,255,255,0.8);
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: var(--space-12);
+}
+
+/* Programs Section */
+.programsSection { background: var(--color-bg); }
+
+.programList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.programRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-10);
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .programRow { grid-template-columns: 1fr 1fr; }
+  .reverse { direction: rtl; }
+  .reverse > * { direction: ltr; }
+}
+
+.progImage {
+  position: relative;
+  height: 380px;
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-2xl);
+}
+
+.img { object-fit: cover; }
+
+.progBadge {
+  position: absolute;
+  bottom: var(--space-4);
+  left: var(--space-4);
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(8px);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.progContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.progAges {
+  display: inline-block;
+  background: var(--color-secondary);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-full);
+  align-self: flex-start;
+}
+
+.progTitle {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.progDesc {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  line-height: 1.75;
+}
+
+.subjectGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.subject {
+  font-size: 0.78rem;
+  background: var(--color-primary-50);
+  color: var(--color-primary);
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-primary-100);
+  font-weight: 600;
+}
+
+/* Curriculum */
+.curriculumSection {
+  background: var(--color-bg-alt);
+}
+
+[data-theme='dark'] .curriculumSection { background: var(--color-bg); }
+
+.curriculumGrid {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .curriculumGrid { grid-template-columns: 1fr 1fr; }
+}
+
+.currCard {
+  background: var(--color-bg);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+}
+
+[data-theme='dark'] .currCard { background: var(--color-bg-alt); }
+
+.currCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--color-primary-100);
+}
+
+.currIcon {
+  font-size: 2.25rem;
+  display: block;
+  margin-bottom: var(--space-3);
+}
+
+.currTitle {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+}
+
+.currDesc {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+
+/* Approach */
+.approachSection { background: var(--color-bg); }
+
+.approachInner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-12);
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .approachInner { grid-template-columns: 1fr 1fr; }
+}
+
+.approachImageWrap {
+  position: relative;
+  height: 480px;
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-2xl);
+}
+
+.approachList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.approachItem {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.approachIcon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.approachTitle {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+
+.approachDesc {
+  font-size: 0.87rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+
+/* Excellence CTA */
+.excellenceCta {
+  background: var(--color-bg-alt);
+}
+
+[data-theme='dark'] .excellenceCta { background: var(--color-bg); }
