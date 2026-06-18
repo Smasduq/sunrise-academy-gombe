@@ -8,6 +8,7 @@ function isLikelyVercelAppUrl(url: string): boolean {
 }
 
 function getBackendUrl(): string | undefined {
+<<<<<<< HEAD
   const explicit = process.env.BACKEND_API_URL?.replace(/\/$/, '');
   if (explicit) return explicit;
 
@@ -19,15 +20,35 @@ function getBackendUrl(): string | undefined {
   if (publicUrl && !isLikelyVercelAppUrl(publicUrl)) return publicUrl;
 
   return undefined;
+=======
+  // Use BACKEND_API_URL on Vercel — API_URL is often auto-set to the deployment URL.
+  return (
+    process.env.BACKEND_API_URL ??
+    process.env.API_URL ??
+    process.env.NEXT_PUBLIC_API_URL
+  )?.replace(/\/$/, '');
+>>>>>>> adcb03c32ffa6332c592a8fb026071a80bf14c1e
 }
 
 function resolveApiUrl(): string {
   const backend = getBackendUrl();
 
+<<<<<<< HEAD
   // Browser uses same-origin /api/*; Next.js rewrites proxy to FastAPI.
   if (typeof window !== 'undefined') {
     if (backend || process.env.NODE_ENV === 'production') return '';
     return 'http://127.0.0.1:8000';
+=======
+  if (process.env.NODE_ENV === 'production' && !backend) {
+    throw new Error(
+      'BACKEND_API_URL environment variable is required in production.',
+    );
+  }
+
+  // Browser calls same-origin /api/*; Next.js rewrites proxy to the FastAPI backend.
+  if (typeof window !== 'undefined' && backend) {
+    return '';
+>>>>>>> adcb03c32ffa6332c592a8fb026071a80bf14c1e
   }
 
   return backend ?? 'http://127.0.0.1:8000';

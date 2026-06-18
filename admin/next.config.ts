@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 
+<<<<<<< HEAD
 function resolveBackendUrl(): string {
   const explicit = process.env.BACKEND_API_URL?.replace(/\/$/, '');
   if (explicit) return explicit;
@@ -14,6 +15,14 @@ function resolveBackendUrl(): string {
 }
 
 const backendUrl = resolveBackendUrl();
+=======
+const backendUrl = (
+  process.env.BACKEND_API_URL ??
+  process.env.API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  ''
+).replace(/\/$/, '');
+>>>>>>> adcb03c32ffa6332c592a8fb026071a80bf14c1e
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
