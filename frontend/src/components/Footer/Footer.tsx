@@ -13,6 +13,7 @@ const quickLinks = [
   { label: 'About Us', href: '/about' },
   { label: 'Academics', href: '/academics' },
   { label: 'Admissions', href: '/admissions' },
+  { label: 'Portal Login', href: '/login' },
   { label: 'Gallery', href: '/gallery' },
   { label: 'News & Events', href: '/news' },
 ];

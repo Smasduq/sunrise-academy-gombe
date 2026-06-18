@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import Navbar from '@/components/Navbar/Navbar';
-import Footer from '@/components/Footer/Footer';
+import SiteShell from '@/components/SiteShell/SiteShell';
+import Providers from '@/components/Providers/Providers';
 import { SCHOOL_NAME, SCHOOL_TAGLINE, SCHOOL_ADDRESS } from '@/lib/constants';
 
 export const metadata: Metadata = {
@@ -67,9 +67,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
+        <Providers>
+          <SiteShell>{children}</SiteShell>
+        </Providers>
       </body>
     </html>
   );

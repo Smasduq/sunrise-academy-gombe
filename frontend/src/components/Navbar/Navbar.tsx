@@ -106,6 +106,10 @@ export default function Navbar() {
               Apply Now
             </Link>
 
+            <Link href="/login" className={`btn btn-outline btn-sm ${styles.portalBtn}`}>
+              Portal Login
+            </Link>
+
             <button
               className={styles.hamburger}
               onClick={() => setMenuOpen((v) => !v)}
@@ -155,6 +159,13 @@ export default function Navbar() {
             onClick={() => setMenuOpen(false)}
           >
             Apply Now →
+          </Link>
+          <Link
+            href="/login"
+            className={`btn btn-outline btn-lg ${styles.mobilePortalBtn}`}
+            onClick={() => setMenuOpen(false)}
+          >
+            Portal Login
           </Link>
         </div>
       </nav>
