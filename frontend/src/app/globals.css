@@ -72,6 +72,18 @@
   --nav-height: 4.5rem;
 }
 
+@media (max-width: 1023px) {
+  :root {
+    --nav-height: 3.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --nav-height: 3.25rem;
+  }
+}
+
 /* ─── Dark Mode ─── */
 [data-theme='dark'] {
   --color-bg: #0F172A;

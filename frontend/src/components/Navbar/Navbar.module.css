@@ -7,22 +7,28 @@
   z-index: var(--z-sticky);
   display: flex;
   align-items: center;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
   transition: background-color var(--transition-base), box-shadow var(--transition-base), backdrop-filter var(--transition-base);
 }
 
 .navbar.scrolled {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--color-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
 }
 
 .navbar.transparent {
-  background: transparent;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
 }
 
-[data-theme='dark'] .navbar.scrolled {
-  background: rgba(15, 23, 42, 0.95);
+[data-theme='dark'] .navbar,
+[data-theme='dark'] .navbar.scrolled,
+[data-theme='dark'] .navbar.transparent {
+  background: var(--color-bg);
+  border-bottom-color: var(--color-border);
 }
 
 .inner {
@@ -71,10 +77,6 @@
   transition: color var(--transition-fast);
 }
 
-.navbar.transparent .logoName {
-  color: white;
-}
-
 .logoSub {
   font-size: 0.65rem;
   font-weight: 500;
@@ -82,10 +84,6 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   transition: color var(--transition-fast);
-}
-
-.navbar.transparent .logoSub {
-  color: rgba(255,255,255,0.7);
 }
 
 /* Desktop Nav */
@@ -110,10 +108,6 @@
   position: relative;
 }
 
-.navbar.transparent .navLink {
-  color: rgba(255,255,255,0.9);
-}
-
 .navLink::after {
   content: '';
   position: absolute;
@@ -127,10 +121,6 @@
   transition: width var(--transition-base);
 }
 
-.navbar.transparent .navLink::after {
-  background: white;
-}
-
 .navLink:hover::after,
 .navLink.active::after {
   width: 60%;
@@ -140,18 +130,9 @@
   color: var(--color-primary);
 }
 
-.navbar.transparent .navLink:hover {
-  color: white;
-  opacity: 0.85;
-}
-
 .navLink.active {
   color: var(--color-primary);
   font-weight: 600;
-}
-
-.navbar.transparent .navLink.active {
-  color: white;
 }
 
 /* Actions */
@@ -159,6 +140,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
 }
 
 .themeToggle {
@@ -174,12 +158,13 @@
   font-size: 1rem;
   transition: all var(--transition-fast);
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.navbar.transparent .themeToggle {
-  background: rgba(255,255,255,0.15);
-  border-color: rgba(255,255,255,0.3);
-  color: white;
+.actionIcon {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .themeToggle:hover {
@@ -201,17 +186,6 @@
   .applyBtn { display: inline-flex; }
 }
 
-.navbar.transparent .portalBtn {
-  color: white;
-  border-color: rgba(255, 255, 255, 0.85);
-}
-
-.navbar.transparent .portalBtn:hover {
-  background: white;
-  color: var(--color-primary);
-  border-color: white;
-}
-
 /* Hamburger */
 .hamburger {
   display: flex;
@@ -227,11 +201,11 @@
   justify-content: center;
   align-items: center;
   transition: all var(--transition-fast);
-}
-
-.navbar.transparent .hamburger {
-  background: rgba(255,255,255,0.15);
-  border-color: rgba(255,255,255,0.3);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
 }
 
 .hamburger:hover {
@@ -253,10 +227,7 @@
   background: var(--color-text);
   border-radius: 2px;
   transition: all var(--transition-fast);
-}
-
-.navbar.transparent .bar {
-  background: white;
+  pointer-events: none;
 }
 
 .bar.open:nth-child(1) {
@@ -284,10 +255,14 @@
   z-index: calc(var(--z-sticky) - 1);
   padding: var(--space-6) var(--space-4);
   border-top: 1px solid var(--color-border);
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .mobileDrawer.open {
   transform: translateX(0);
+  pointer-events: auto;
+  visibility: visible;
 }
 
 .mobileNavLinks {
@@ -351,4 +326,80 @@
 .overlay.visible {
   opacity: 1;
   pointer-events: all;
+}
+
+/* Mobile header — smaller logo, actions, and spacing */
+@media (max-width: 1023px) {
+  .logo {
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .logoIcon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+
+  .logoName {
+    font-size: 0.875rem;
+  }
+
+  .logoSub {
+    font-size: 0.55rem;
+    letter-spacing: 0.03em;
+  }
+
+  .actions {
+    gap: var(--space-2);
+  }
+
+  .actionIcon {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .bar {
+    width: 16px;
+  }
+
+  .bar.open:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+
+  .bar.open:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  .portalBtn {
+    display: none;
+  }
+
+  .hamburger {
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+    gap: 4px;
+  }
+
+  .themeToggle {
+    width: 44px;
+    height: 44px;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .logoSub {
+    display: none;
+  }
+
+  .logoName {
+    font-size: 0.8rem;
+  }
+
+  .logoIcon {
+    width: 32px;
+    height: 32px;
+  }
 }
