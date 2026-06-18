@@ -2,17 +2,44 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import styles from './staff.module.css';
 import { STAFF_MEMBERS } from '@/lib/data';
+import { fetchPublicTeachers } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Our Staff',
   description: 'Meet the dedicated teachers and administrative staff who make Sunrise Academy Gombe one of the best schools in Gombe State.',
 };
 
-const teachers = STAFF_MEMBERS.filter((s) => !s.isHeadmaster && s.department !== 'Administration');
-const admin = STAFF_MEMBERS.filter((s) => !s.isHeadmaster && s.department === 'Administration');
+const TEACHER_IMAGES = [
+  '/images/staff-3.svg',
+  '/images/staff-4.svg',
+  '/images/staff-5.svg',
+  '/images/staff-6.svg',
+  '/images/staff-7.svg',
+  '/images/staff-8.svg',
+];
+
 const headmaster = STAFF_MEMBERS.find((s) => s.isHeadmaster);
 
-export default function StaffPage() {
+function teacherImage(index: number) {
+  return TEACHER_IMAGES[index % TEACHER_IMAGES.length];
+}
+
+function classLabel(classNames: string[]) {
+  if (classNames.length === 0) return null;
+  return classNames.length === 1
+    ? `Class: ${classNames[0]}`
+    : `Classes: ${classNames.join(', ')}`;
+}
+
+export default async function StaffPage() {
+  let teachers: Awaited<ReturnType<typeof fetchPublicTeachers>> = [];
+
+  try {
+    teachers = await fetchPublicTeachers();
+  } catch {
+    teachers = [];
+  }
+
   return (
     <div className={styles.page}>
       {/* Banner */}
@@ -72,38 +99,6 @@ export default function StaffPage() {
         </section>
       )}
 
-      {/* Administrative Staff */}
-      {admin.length > 0 && (
-        <section className={`section ${styles.adminSection}`} aria-labelledby="admin-heading">
-          <div className="container">
-            <div className={styles.sectionHeader}>
-              <span className="section-badge">Administration</span>
-              <h2 id="admin-heading" className="section-title">Administrative Staff</h2>
-            </div>
-            <div className={styles.adminGrid}>
-              {admin.map((member) => (
-                <div key={member.id} className={styles.staffCard}>
-                  <div className={styles.cardImgWrap}>
-                    <Image
-                      src={member.image}
-                      alt={member.name}
-                      fill
-                      className={styles.cardImg}
-                      sizes="(max-width: 640px) 100vw, 320px"
-                    />
-                  </div>
-                  <div className={styles.cardBody}>
-                    <h3 className={styles.cardName}>{member.name}</h3>
-                    <span className={styles.cardRole}>{member.role}</span>
-                    <span className={styles.cardQual}>{member.qualification}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Teachers Grid */}
       <section className={`section ${styles.teachersSection}`} aria-labelledby="teachers-heading">
         <div className="container">
@@ -114,29 +109,43 @@ export default function StaffPage() {
               Our team of qualified, passionate educators brings expertise and dedication to every classroom, every day.
             </p>
           </div>
-          <div className={styles.teachersGrid}>
-            {teachers.map((member) => (
-              <div key={member.id} className={styles.teacherCard}>
-                <div className={styles.teacherImgWrap}>
-                  <Image
-                    src={member.image}
-                    alt={member.name}
-                    fill
-                    className={styles.teacherImg}
-                    sizes="(max-width: 640px) 50vw, 25vw"
-                  />
-                  <div className={styles.teacherOverlay}>
-                    <span className={styles.teacherDept}>{member.department}</span>
+
+          {teachers.length === 0 ? (
+            <p className={styles.emptyTeachers}>
+              Teaching staff profiles will appear here once they are added by the school administration.
+            </p>
+          ) : (
+            <div className={styles.teachersGrid}>
+              {teachers.map((member, index) => {
+                const name = `${member.first_name} ${member.last_name}`;
+                const subtitle = classLabel(member.class_names) ?? member.department ?? '';
+
+                return (
+                  <div key={member.id} className={styles.teacherCard}>
+                    <div className={styles.teacherImgWrap}>
+                      <Image
+                        src={teacherImage(index)}
+                        alt={name}
+                        fill
+                        className={styles.teacherImg}
+                        sizes="(max-width: 640px) 50vw, 25vw"
+                      />
+                      {member.department && (
+                        <div className={styles.teacherOverlay}>
+                          <span className={styles.teacherDept}>{member.department}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className={styles.teacherBody}>
+                      <h3 className={styles.teacherName}>{name}</h3>
+                      <span className={styles.teacherRole}>{member.position ?? 'Teacher'}</span>
+                      {subtitle && <span className={styles.teacherQual}>{subtitle}</span>}
+                    </div>
                   </div>
-                </div>
-                <div className={styles.teacherBody}>
-                  <h3 className={styles.teacherName}>{member.name}</h3>
-                  <span className={styles.teacherRole}>{member.role}</span>
-                  <span className={styles.teacherQual}>{member.qualification}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 

@@ -282,3 +282,16 @@ export function academicApi(token: string) {
     subjects: () => apiFetch<SubjectItem[]>('/api/academic/subjects', { token }),
   };
 }
+
+export interface PublicStaffMember {
+  id: string;
+  first_name: string;
+  last_name: string;
+  department: string | null;
+  position: string | null;
+  class_names: string[];
+}
+
+export async function fetchPublicTeachers(): Promise<PublicStaffMember[]> {
+  return apiFetch<PublicStaffMember[]>('/api/public/staff/teachers');
+}
