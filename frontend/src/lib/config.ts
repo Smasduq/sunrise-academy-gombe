@@ -11,7 +11,6 @@ function getBackendUrl(): string | undefined {
   const explicit = process.env.BACKEND_API_URL?.replace(/\/$/, '');
   if (explicit) return explicit;
 
-  // Vercel may auto-set API_URL to the deployment URL — ignore that value.
   const legacy = process.env.API_URL?.replace(/\/$/, '');
   if (legacy && !isLikelyVercelAppUrl(legacy)) return legacy;
 
@@ -24,7 +23,6 @@ function getBackendUrl(): string | undefined {
 function resolveApiUrl(): string {
   const backend = getBackendUrl();
 
-  // Browser uses same-origin /api/*; Next.js rewrites proxy to FastAPI.
   if (typeof window !== 'undefined') {
     if (backend || process.env.NODE_ENV === 'production') return '';
     return 'http://127.0.0.1:8000';

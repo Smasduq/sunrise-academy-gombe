@@ -20,7 +20,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   async rewrites() {
     if (!backendUrl) return [];
-    // Only proxy FastAPI routes — never NextAuth routes like /api/auth/signout.
     return [
       {
         source: '/api/admin/:path*',

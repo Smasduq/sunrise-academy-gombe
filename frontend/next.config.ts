@@ -20,7 +20,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   async rewrites() {
     if (!backendUrl) return [];
-    // Only proxy FastAPI routes — keep NextAuth and local API routes on Next.js.
     return [
       { source: '/api/health', destination: `${backendUrl}/api/health` },
       { source: '/api/academic/:path*', destination: `${backendUrl}/api/academic/:path*` },
