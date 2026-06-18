@@ -180,3 +180,12 @@ class PostAnnouncementRequest(BaseModel):
     title: str
     content: str
     audience: AnnouncementAudience = AnnouncementAudience.ALL
+
+
+class PublicStaffOut(BaseModel):
+    id: str
+    first_name: str
+    last_name: str
+    department: str | None
+    position: str | None
+    class_names: list[str]
