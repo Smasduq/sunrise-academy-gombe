@@ -1,4 +1,4 @@
-import { API_URL } from '@/lib/config';
+import { API_URL, assertBackendConfigured } from '@/lib/config';
 
 export class ApiError extends Error {
   status: number;
@@ -12,6 +12,8 @@ export class ApiError extends Error {
 type ApiOptions = RequestInit & { token?: string };
 
 export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
+  assertBackendConfigured();
+
   const { token, ...init } = options;
   const headers = new Headers(init.headers);
 
