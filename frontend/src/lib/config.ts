@@ -1,44 +1,43 @@
-function isLikelyVercelAppUrl(url: string): boolean {
+const DEV_BACKEND_DEFAULT = 'http://127.0.0.1:8000';
+
+function isBlockedBackendUrl(url: string): boolean {
   try {
     const host = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
-    return host.endsWith('.vercel.app');
+    return host.endsWith('.vercel.app') || host.endsWith('.vercel.sh');
   } catch {
     return false;
   }
 }
 
-function getBackendUrl(): string | undefined {
-  const explicit = process.env.BACKEND_API_URL?.replace(/\/$/, '');
-  if (explicit) return explicit;
+/** FastAPI base URL. In production only BACKEND_API_URL is used (never API_URL). */
+export function getBackendUrl(): string | undefined {
+  const explicit = process.env.BACKEND_API_URL?.trim().replace(/\/$/, '');
+  if (explicit && !isBlockedBackendUrl(explicit)) return explicit;
 
-  const legacy = process.env.API_URL?.replace(/\/$/, '');
-  if (legacy && !isLikelyVercelAppUrl(legacy)) return legacy;
+  if (process.env.NODE_ENV === 'production') {
+    return undefined;
+  }
 
-  const publicUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '');
-  if (publicUrl && !isLikelyVercelAppUrl(publicUrl)) return publicUrl;
-
-  return undefined;
+  return DEV_BACKEND_DEFAULT;
 }
 
-function resolveApiUrl(): string {
+/** Base URL for fetch(). Browser uses same-origin proxy; server calls FastAPI directly. */
+export function getApiUrl(): string {
   const backend = getBackendUrl();
 
   if (typeof window !== 'undefined') {
-    if (backend || process.env.NODE_ENV === 'production') return '';
-    return 'http://127.0.0.1:8000';
+    return process.env.NODE_ENV === 'production' || backend ? '' : DEV_BACKEND_DEFAULT;
   }
 
-  return backend ?? 'http://127.0.0.1:8000';
+  return backend ?? DEV_BACKEND_DEFAULT;
 }
 
-export const API_URL = resolveApiUrl();
-export const BACKEND_URL = getBackendUrl() ?? 'http://127.0.0.1:8000';
 export const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 export function assertBackendConfigured(): void {
   if (IS_PRODUCTION && !getBackendUrl()) {
     throw new Error(
-      'BACKEND_API_URL must be set in Vercel to your FastAPI server URL (not the Vercel frontend URL).',
+      'BACKEND_API_URL must be set on Vercel to your FastAPI server URL. Remove API_URL from Vercel env vars — Vercel may overwrite it with your deployment URL.',
     );
   }
 }

@@ -1,4 +1,4 @@
-import { API_URL, assertBackendConfigured } from '@/lib/config';
+import { getApiUrl, assertBackendConfigured } from '@/lib/config';
 
 export class ApiError extends Error {
   status: number;
@@ -24,7 +24,7 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
     headers.set('Content-Type', 'application/json');
   }
 
-  const res = await fetch(`${API_URL}${path}`, { ...init, headers, cache: 'no-store' });
+  const res = await fetch(`${getApiUrl()}${path}`, { ...init, headers, cache: 'no-store' });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText }));
