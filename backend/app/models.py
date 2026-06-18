@@ -109,12 +109,22 @@ class Student(Base):
     admission_number: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     first_name: Mapped[str] = mapped_column(String(100))
     last_name: Mapped[str] = mapped_column(String(100))
+    middle_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     date_of_birth: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     gender: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    photo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     guardian_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    mother_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
     guardian_phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    guardian_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    guardian_relationship: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    emergency_contact: Mapped[str | None] = mapped_column(String(30), nullable=True)
     address: Mapped[str | None] = mapped_column(String(255), nullable=True)
     class_id: Mapped[str | None] = mapped_column(ForeignKey("classes.id"), index=True)
+    admission_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    is_archived: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
@@ -126,6 +136,25 @@ class Student(Base):
     attendance: Mapped[list["Attendance"]] = relationship(back_populates="student")
     submissions: Mapped[list["AssignmentSubmission"]] = relationship(back_populates="student")
     fee_payments: Mapped[list["FeePayment"]] = relationship(back_populates="student")
+    promotion_history: Mapped[list["StudentPromotionHistory"]] = relationship(
+        back_populates="student"
+    )
+
+
+class StudentPromotionHistory(Base):
+    __tablename__ = "student_promotion_history"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    student_id: Mapped[str] = mapped_column(
+        ForeignKey("students.id", ondelete="CASCADE"), index=True
+    )
+    from_class_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    to_class_name: Mapped[str] = mapped_column(String(100))
+    promoted_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    promoted_by_name: Mapped[str] = mapped_column(String(150))
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)
+
+    student: Mapped[Student] = relationship(back_populates="promotion_history")
 
 
 class Staff(Base):

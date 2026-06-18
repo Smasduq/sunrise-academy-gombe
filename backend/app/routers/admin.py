@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from typing import Annotated
@@ -29,14 +31,24 @@ def _student_out(student: Student) -> StudentOut:
         admission_number=student.admission_number,
         first_name=student.first_name,
         last_name=student.last_name,
+        middle_name=student.middle_name,
         class_id=student.class_id,
         class_name=student.class_.name if student.class_ else None,
         guardian_name=student.guardian_name,
+        mother_name=student.mother_name,
         guardian_phone=student.guardian_phone,
+        guardian_email=student.guardian_email,
+        guardian_relationship=student.guardian_relationship,
+        emergency_contact=student.emergency_contact,
         gender=student.gender,
         address=student.address,
+        photo_url=student.photo_url,
+        date_of_birth=student.date_of_birth,
+        admission_date=student.admission_date,
+        is_archived=bool(student.is_archived),
         status=student.user.status,
         created_at=student.created_at,
+        updated_at=student.updated_at,
     )
 
 
@@ -107,6 +119,7 @@ def list_students(
     students = (
         db.query(Student)
         .options(joinedload(Student.user), joinedload(Student.class_))
+        .filter(Student.is_deleted.is_(False))
         .order_by(Student.last_name)
         .all()
     )
@@ -116,7 +129,7 @@ def list_students(
 @router.post("/students", response_model=StudentOut, status_code=status.HTTP_201_CREATED)
 def create_student(
     payload: StudentCreateRequest,
-    user: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
+    admin_user: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
     db: Annotated[Session, Depends(get_db)],
 ):
     if db.query(Student).filter(Student.admission_number == payload.admission_number.upper()).first():
@@ -124,29 +137,37 @@ def create_student(
 
     _validate_class_id(db, payload.class_id)
 
-    user = User(
+    student_user = User(
         password_hash=hash_password(payload.password),
         role=Role.STUDENT,
         status=payload.status,
     )
-    db.add(user)
+    db.add(student_user)
     db.flush()
 
     student = Student(
-        user_id=user.id,
+        user_id=student_user.id,
         admission_number=payload.admission_number.upper(),
         first_name=payload.first_name,
         last_name=payload.last_name,
+        middle_name=payload.middle_name,
         class_id=payload.class_id,
         guardian_name=payload.guardian_name,
+        mother_name=payload.mother_name,
         guardian_phone=payload.guardian_phone,
+        guardian_email=payload.guardian_email,
+        guardian_relationship=payload.guardian_relationship,
+        emergency_contact=payload.emergency_contact,
         gender=payload.gender,
         address=payload.address,
+        photo_url=payload.photo_url,
+        date_of_birth=payload.date_of_birth,
+        admission_date=payload.admission_date,
     )
     db.add(student)
     log_admin_activity(
         db,
-        user,
+        admin_user,
         action="CREATE",
         entity_type="student",
         entity_id=student.id,
@@ -172,7 +193,7 @@ def get_student(
     student = (
         db.query(Student)
         .options(joinedload(Student.user), joinedload(Student.class_))
-        .filter(Student.id == student_id)
+        .filter(Student.id == student_id, Student.is_deleted.is_(False))
         .first()
     )
     if not student:
@@ -190,7 +211,7 @@ def update_student(
     student = (
         db.query(Student)
         .options(joinedload(Student.user), joinedload(Student.class_))
-        .filter(Student.id == student_id)
+        .filter(Student.id == student_id, Student.is_deleted.is_(False))
         .first()
     )
     if not student:
@@ -212,6 +233,8 @@ def update_student(
         student.first_name = payload.first_name
     if payload.last_name:
         student.last_name = payload.last_name
+    if payload.middle_name is not None:
+        student.middle_name = payload.middle_name
     if payload.class_id is not None:
         _validate_class_id(db, payload.class_id or None)
         student.class_id = payload.class_id or None
@@ -219,10 +242,26 @@ def update_student(
         student.guardian_name = payload.guardian_name
     if payload.guardian_phone is not None:
         student.guardian_phone = payload.guardian_phone
+    if payload.mother_name is not None:
+        student.mother_name = payload.mother_name
+    if payload.guardian_email is not None:
+        student.guardian_email = payload.guardian_email
+    if payload.guardian_relationship is not None:
+        student.guardian_relationship = payload.guardian_relationship
+    if payload.emergency_contact is not None:
+        student.emergency_contact = payload.emergency_contact
     if payload.gender is not None:
         student.gender = payload.gender
     if payload.address is not None:
         student.address = payload.address
+    if payload.photo_url is not None:
+        student.photo_url = payload.photo_url
+    if payload.date_of_birth is not None:
+        student.date_of_birth = payload.date_of_birth
+    if payload.admission_date is not None:
+        student.admission_date = payload.admission_date
+    if payload.is_archived is not None:
+        student.is_archived = payload.is_archived
     if payload.status:
         student.user.status = payload.status
     if payload.password:
@@ -247,18 +286,28 @@ def delete_student(
     user: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
     db: Annotated[Session, Depends(get_db)],
 ):
-    student = db.query(Student).filter(Student.id == student_id).first()
+    student = (
+        db.query(Student)
+        .options(joinedload(Student.user))
+        .filter(Student.id == student_id, Student.is_deleted.is_(False))
+        .first()
+    )
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
+
+    student.is_deleted = True
+    student.deleted_at = datetime.now(timezone.utc)
+    student.is_archived = True
+    student.user.status = UserStatus.SUSPENDED
+
     log_admin_activity(
         db,
         user,
         action="DELETE",
         entity_type="student",
         entity_id=student.id,
-        details=f"{student.first_name} {student.last_name}",
+        details=f"{student.first_name} {student.last_name} (soft delete)",
     )
-    db.delete(student.user)
     db.commit()
     return {"message": "Student deleted"}
 

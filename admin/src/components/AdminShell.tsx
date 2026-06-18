@@ -15,6 +15,7 @@ const NAV_GROUPS = [
     label: 'People',
     items: [
       { href: '/dashboard/students', label: 'Students', short: 'Students' },
+      { href: '/dashboard/students/archived', label: 'Archived', short: 'Archive' },
       { href: '/dashboard/staff', label: 'Staff', short: 'Staff' },
       { href: '/dashboard/admissions', label: 'Admissions', short: 'Admit' },
     ],

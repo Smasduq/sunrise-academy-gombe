@@ -46,18 +46,34 @@ def get_db() -> Generator[Session, None, None]:
 def init_db() -> None:
     import app.models  # noqa: F401
     from app.admin_helpers import get_or_create_settings
+    from app.schema_migrations import ensure_student_columns, ensure_student_promotion_table
     from app.school_classes import ensure_school_classes
 
     if settings.database_url.startswith("sqlite"):
         db_path = settings.database_url.replace("sqlite:///", "")
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as exc:
+        print(f"[init_db] create_all warning: {exc}")
+
+    try:
+        ensure_student_columns()
+    except Exception as exc:
+        print(f"[init_db] student columns warning: {exc}")
+
+    try:
+        ensure_student_promotion_table()
+    except Exception as exc:
+        print(f"[init_db] promotion table warning: {exc}")
 
     db = SessionLocal()
     try:
         ensure_school_classes(db)
         get_or_create_settings(db)
+    except Exception as exc:
+        print(f"[init_db] seed warning: {exc}")
     finally:
         db.close()
 

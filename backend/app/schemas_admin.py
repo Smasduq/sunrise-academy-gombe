@@ -23,13 +23,147 @@ class StudentOut(BaseModel):
     admission_number: str
     first_name: str
     last_name: str
+    middle_name: str | None = None
     class_id: str | None
     class_name: str | None
     guardian_name: str | None
+    mother_name: str | None = None
     guardian_phone: str | None
+    guardian_email: str | None = None
+    guardian_relationship: str | None = None
+    emergency_contact: str | None = None
     gender: str | None
     address: str | None
+    photo_url: str | None = None
+    date_of_birth: datetime | None = None
+    admission_date: datetime | None = None
+    is_archived: bool = False
     status: UserStatus
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class StudentStatsOut(BaseModel):
+    total: int
+    male: int
+    female: int
+    active: int
+    inactive: int
+    archived: int
+    new_this_term: int
+
+
+class StudentResultSummary(BaseModel):
+    subject_name: str
+    score: float
+    grade: str | None
+    remark: str | None
+    term_name: str | None
+
+
+class StudentProfileOut(BaseModel):
+    student: StudentOut
+    academic_session: str | None
+    attendance_present: int
+    attendance_absent: int
+    attendance_late: int
+    attendance_percent: float
+    average_score: float | None
+    class_position: int | None
+    latest_results: list[StudentResultSummary]
+    recent_activities: list[StudentActivityItemOut] = []
+    recent_attendance: list[StudentAttendanceRecordOut] = []
+
+
+class PromoteStudentsRequest(BaseModel):
+    student_ids: list[str] = []
+    class_name: str | None = None
+
+
+class PromotePreviewItem(BaseModel):
+    student_id: str
+    student_name: str
+    from_class: str | None
+    to_class: str | None
+    can_promote: bool
+    reason: str | None = None
+
+
+class PromoteResultOut(BaseModel):
+    promoted: int
+    skipped: int
+    items: list[PromotePreviewItem]
+
+
+class StudentAttendanceRecordOut(BaseModel):
+    id: str
+    date: str
+    status: str
+    remark: str | None
+    term_name: str | None
+    session_name: str | None
+
+
+class StudentAttendanceOut(BaseModel):
+    present: int
+    absent: int
+    late: int
+    excused: int
+    total: int
+    percent: float
+    records: list[StudentAttendanceRecordOut]
+    sessions: list[str]
+    terms: list[str]
+
+
+class StudentResultScoreOut(BaseModel):
+    subject_name: str
+    subject_code: str
+    score: float
+    grade: str | None
+    remark: str | None
+
+
+class StudentResultRecordOut(BaseModel):
+    id: str
+    term_name: str
+    session_name: str
+    class_name: str
+    average: float | None
+    grade: str | None
+    position: int | None
+    remark: str | None
+    status: str
+    published_at: datetime | None
+    scores: list[StudentResultScoreOut]
+
+
+class StudentResultsOut(BaseModel):
+    results: list[StudentResultRecordOut]
+    sessions: list[str]
+    terms: list[str]
+
+
+class StudentDeleteCheckOut(BaseModel):
+    results_count: int
+    attendance_count: int
+    fee_count: int
+    has_records: bool
+
+
+class PromotionHistoryOut(BaseModel):
+    id: str
+    from_class_name: str | None
+    to_class_name: str
+    promoted_by_name: str
+    created_at: datetime
+
+
+class StudentActivityItemOut(BaseModel):
+    id: str
+    action: str
+    admin_name: str
+    details: str | None
     created_at: datetime
 
 
@@ -37,12 +171,20 @@ class StudentCreateRequest(BaseModel):
     admission_number: str = Field(min_length=3)
     first_name: str = Field(min_length=2)
     last_name: str = Field(min_length=2)
+    middle_name: str | None = None
     password: str = Field(min_length=8)
     class_id: str | None = None
     guardian_name: str | None = None
+    mother_name: str | None = None
     guardian_phone: str | None = None
+    guardian_email: str | None = None
+    guardian_relationship: str | None = None
+    emergency_contact: str | None = None
     gender: str | None = None
     address: str | None = None
+    photo_url: str | None = None
+    date_of_birth: datetime | None = None
+    admission_date: datetime | None = None
     status: UserStatus = UserStatus.ACTIVE
 
 
@@ -50,12 +192,21 @@ class StudentUpdateRequest(BaseModel):
     admission_number: str | None = None
     first_name: str | None = None
     last_name: str | None = None
+    middle_name: str | None = None
     password: str | None = Field(default=None, min_length=8)
     class_id: str | None = None
     guardian_name: str | None = None
+    mother_name: str | None = None
     guardian_phone: str | None = None
+    guardian_email: str | None = None
+    guardian_relationship: str | None = None
+    emergency_contact: str | None = None
     gender: str | None = None
     address: str | None = None
+    photo_url: str | None = None
+    date_of_birth: datetime | None = None
+    admission_date: datetime | None = None
+    is_archived: bool | None = None
     status: UserStatus | None = None
 
 

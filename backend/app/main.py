@@ -4,13 +4,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.database import init_db
-from app.routers import academic, admin, admin_overview, auth, health, public, staff, student
+from app.routers import academic, admin, admin_overview, admin_students, auth, health, public, staff, student
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    init_db()
+    # Schema migrations are run separately (see scripts/migrate_db.py) to avoid
+    # blocking startup on slow remote databases.
     yield
 
 
@@ -28,11 +28,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Register routers — admin_students MUST come before admin so /students/stats
+# and /students/{id}/profile are not captured by admin's /students/{student_id}.
 app.include_router(health.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 app.include_router(academic.router, prefix="/api")
 app.include_router(student.router, prefix="/api")
 app.include_router(staff.router, prefix="/api")
-app.include_router(admin.router, prefix="/api")
+app.include_router(admin_students.router, prefix="/api")
 app.include_router(admin_overview.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
 app.include_router(public.router, prefix="/api")
