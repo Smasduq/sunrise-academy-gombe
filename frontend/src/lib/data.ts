@@ -150,12 +150,12 @@ export const GALLERY_IMAGES: GalleryImage[] = [
 export const STAFF_MEMBERS: StaffMember[] = [
   {
     id: 1,
-    name: 'Dr. Aisha Mohammed',
+    name: 'Ibrahim Isa',
     role: 'Headmaster',
     department: 'Administration',
     image: '/images/staff-principal.svg',
     qualification: 'PhD in Educational Administration, ABU Zaria',
-    bio: 'Dr. Aisha Mohammed brings over 20 years of experience in educational leadership, transforming Sunrise Academy into one of the leading schools in Gombe State.',
+    bio: 'Ibrahim Isa brings over 20 years of experience in educational leadership, transforming Sunrise Academy into one of the leading schools in Gombe State.',
     isHeadmaster: true,
   },
   {

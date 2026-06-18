@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.deps import CurrentUser, get_current_user
 from app.auth.security import (
+    authenticate_admin,
     authenticate_staff,
     authenticate_student,
     create_access_token,
@@ -20,6 +21,7 @@ from app.schemas import (
     StudentLoginRequest,
     TokenResponse,
 )
+from app.schemas_admin import AdminLoginRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -44,6 +46,23 @@ def student_login(payload: StudentLoginRequest, db: Annotated[Session, Depends(g
 @router.post("/staff/login", response_model=TokenResponse)
 def staff_login(payload: StaffLoginRequest, db: Annotated[Session, Depends(get_db)]):
     account = authenticate_staff(db, payload.staff_id, payload.password)
+    if not account:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    token = create_access_token(**account)
+    return TokenResponse(
+        access_token=token,
+        user_id=account["user_id"],
+        role=account["role"],
+        display_name=account["display_name"],
+        identifier=account["identifier"],
+        profile_id=account["profile_id"],
+    )
+
+
+@router.post("/admin/login", response_model=TokenResponse)
+def admin_login(payload: AdminLoginRequest, db: Annotated[Session, Depends(get_db)]):
+    account = authenticate_admin(db, str(payload.email), payload.password)
     if not account:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 

@@ -11,7 +11,7 @@
     <text x="300" y="336" font-size="110" text-anchor="middle" fill="#ffffff">👤</text>
     
     <rect x="0" y="496" width="600" height="304" fill="rgba(15, 23, 42, 0.88)" />
-    <text x="300" y="576" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="700" fill="#ffffff" text-anchor="middle">Dr. Aisha Mohammed</text>
+    <text x="300" y="576" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="700" fill="#ffffff" text-anchor="middle">Ibrahim Isa</text>
     <text x="300" y="640" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="600" fill="#14b8a6" text-anchor="middle">School Principal</text>
     <text x="300" y="696" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#94a3b8" text-anchor="middle">Administration</text>
   </svg>

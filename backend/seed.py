@@ -6,6 +6,7 @@ from app.auth.security import hash_password
 from app.database import SessionLocal, init_db
 from app.models import (
     AcademicSession,
+    Admin,
     Admission,
     Announcement,
     AnnouncementAudience,
@@ -43,6 +44,7 @@ def clear_tables(db) -> None:
         ClassSubject,
         Student,
         Staff,
+        Admin,
         User,
         Term,
         AcademicSession,
@@ -104,6 +106,23 @@ def seed() -> None:
         for cls in [primary3, primary5]:
             for subject in subjects:
                 db.add(ClassSubject(class_id=cls.id, subject_id=subject.id))
+
+        admin_user = User(
+            email="admin@sunriseacademy.edu",
+            password_hash=hash_password("Admin123!"),
+            role=Role.ADMIN,
+            status=UserStatus.ACTIVE,
+        )
+        db.add(admin_user)
+        db.flush()
+        db.add(
+            Admin(
+                user_id=admin_user.id,
+                email="admin@sunriseacademy.edu",
+                first_name="School",
+                last_name="Administrator",
+            )
+        )
 
         staff_user = User(
             password_hash=hash_password("Staff123!"),

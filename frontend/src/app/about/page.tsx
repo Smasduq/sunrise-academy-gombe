@@ -103,7 +103,7 @@ export default function AboutPage() {
         <div className="container">
           <div className={styles.principalGrid}>
             <div className={styles.principalImage}>
-              <Image src="/images/staff-principal.svg" alt="Dr. Aisha Mohammed – Principal, Sunrise Academy Gombe" fill className={styles.img} sizes="(max-width: 768px) 100vw, 40vw" />
+              <Image src="/images/staff-principal.svg" alt="Ibrahim Isa – Principal, Sunrise Academy Gombe" fill className={styles.img} sizes="(max-width: 768px) 100vw, 40vw" />
             </div>
             <div className={styles.principalText}>
               <span className="section-badge">Headmaster's Message</span>
@@ -114,7 +114,7 @@ export default function AboutPage() {
                 We are deeply proud of our community — our dedicated teachers, supportive parents, and above all, our brilliant students who inspire us every single day. Together, we are building a legacy of excellence that will long outlast our time."
               </blockquote>
               <div className={styles.principalInfo}>
-                <strong className={styles.principalName}>Dr. Aisha Mohammed</strong>
+                <strong className={styles.principalName}>Ibrahim Isa</strong>
                 <span className={styles.principalRole}>Headmaster, Sunrise Academy Gombe</span>
                 <span className={styles.principalQual}>PhD in Educational Administration, ABU Zaria</span>
               </div>

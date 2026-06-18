@@ -27,6 +27,7 @@ def new_id() -> str:
 class Role(str, enum.Enum):
     STUDENT = "STUDENT"
     STAFF = "STAFF"
+    ADMIN = "ADMIN"
 
 
 class UserStatus(str, enum.Enum):
@@ -81,6 +82,23 @@ class User(Base):
 
     student: Mapped["Student | None"] = relationship(back_populates="user", uselist=False)
     staff: Mapped["Staff | None"] = relationship(back_populates="user", uselist=False)
+    admin: Mapped["Admin | None"] = relationship(back_populates="user", uselist=False)
+
+
+class Admin(Base):
+    __tablename__ = "admins"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    first_name: Mapped[str] = mapped_column(String(100))
+    last_name: Mapped[str] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
+
+    user: Mapped[User] = relationship(back_populates="admin")
 
 
 class Student(Base):

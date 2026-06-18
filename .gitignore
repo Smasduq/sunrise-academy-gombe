@@ -1,6 +1,9 @@
 .next
 frontend/node_modules
 frontend/.env
+admin/node_modules
+admin/.env
+admin/.next
 backend/.env
 backend/.venv
 backend/venv

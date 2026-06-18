@@ -143,7 +143,7 @@ const ASSETS = [
   { file: 'gallery-campus-3.svg', type: 'general', title: 'Green Botanical Garden', sub: 'Environmental Learning Center', icon: '🌻', gStart: '#65a30d', gEnd: '#365314' },
 
   // Staff
-  { file: 'staff-principal.svg', type: 'staff', name: 'Dr. Aisha Mohammed', role: 'School Principal', dept: 'Administration', gStart: '#134e4a', gEnd: '#0f172a' },
+  { file: 'staff-principal.svg', type: 'staff', name: 'Ibrahim Isa', role: 'School Principal', dept: 'Administration', gStart: '#134e4a', gEnd: '#0f172a' },
   { file: 'staff-2.svg', type: 'staff', name: 'Mr. Ibrahim Aliyu', role: 'Vice Principal (Academics)', dept: 'Administration', gStart: '#0f172a', gEnd: '#1e293b' },
   { file: 'staff-3.svg', type: 'staff', name: 'Mrs. Fatima Usman', role: 'Head of Primary School', dept: 'Primary', gStart: '#312e81', gEnd: '#1e1b4b' },
   { file: 'staff-4.svg', type: 'staff', name: 'Mr. Yakubu Adamu', role: 'Mathematics Teacher', dept: 'Secondary', gStart: '#1f2937', gEnd: '#111827' },

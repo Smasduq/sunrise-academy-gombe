@@ -69,6 +69,28 @@ def authenticate_student(db: Session, admission_number: str, password: str) -> d
     }
 
 
+def authenticate_admin(db: Session, email: str, password: str) -> dict | None:
+    from app.models import Admin
+
+    admin = db.query(Admin).filter(Admin.email == email.strip().lower()).first()
+    if not admin:
+        return None
+
+    user = db.query(User).filter(User.id == admin.user_id).first()
+    if not user or user.role != Role.ADMIN or user.status == UserStatus.SUSPENDED:
+        return None
+    if not verify_password(password, user.password_hash):
+        return None
+
+    return {
+        "user_id": user.id,
+        "role": user.role,
+        "profile_id": admin.id,
+        "display_name": f"{admin.first_name} {admin.last_name}",
+        "identifier": admin.email,
+    }
+
+
 def authenticate_staff(db: Session, staff_id: str, password: str) -> dict | None:
     from app.models import Staff
 
