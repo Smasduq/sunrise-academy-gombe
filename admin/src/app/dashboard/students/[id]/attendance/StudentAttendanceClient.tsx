@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { adminApi, ApiError, StudentAttendanceData, StudentRecord } from '@/lib/api';
-import { fullName } from '@/components/students/utils';
+import { StudentProfileShell } from '@/components/students/StudentProfileShell';
+import { openStudentIdCard } from '@/components/students/studentCard';
 import crud from '@/components/crud.module.css';
 import styles from '@/components/students/students.module.css';
 
@@ -127,15 +127,21 @@ export function StudentAttendanceClient() {
     return <div className={crud.formError}>{error}</div>;
   }
 
+  async function handlePrintCard() {
+    if (!student || !token) return;
+    const settings = await adminApi(token).settings().catch(() => null);
+    openStudentIdCard(student, settings);
+  }
+
   return (
     <div>
-      <Link href={`/dashboard/students/${id}`} style={{ fontSize: 13, color: '#0b6fd4', textDecoration: 'none' }}>
-        ← Back to profile
-      </Link>
-      <h1 className={styles.pageTitle} style={{ marginTop: 12 }}>
-        Attendance — {student ? fullName(student) : 'Student'}
-      </h1>
-      <p className={styles.pageDesc}>{student?.admission_number} · {student?.class_name ?? 'No class'}</p>
+      {student && (
+        <StudentProfileShell
+          student={student}
+          activeTab="attendance"
+          onPrint={handlePrintCard}
+        />
+      )}
 
       {data && (
         <div className={styles.summaryCards} style={{ marginTop: 16 }}>
