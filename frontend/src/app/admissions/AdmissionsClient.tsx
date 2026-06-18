@@ -162,9 +162,6 @@ export default function AdmissionsClient() {
                         <option>Primary 1</option>
                         <option>Primary 2</option>
                         <option>Primary 3</option>
-                        <option>Primary 4</option>
-                        <option>Primary 5</option>
-                        <option>Primary 6</option>
                       </select>
                     </div>
                   </div>

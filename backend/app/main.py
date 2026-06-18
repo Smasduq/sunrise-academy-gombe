@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import init_db
-from app.routers import academic, admin, auth, health, public, staff, student
+from app.routers import academic, admin, admin_overview, auth, health, public, staff, student
 
 
 @asynccontextmanager
@@ -34,4 +34,5 @@ app.include_router(academic.router, prefix="/api")
 app.include_router(student.router, prefix="/api")
 app.include_router(staff.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+app.include_router(admin_overview.router, prefix="/api")
 app.include_router(public.router, prefix="/api")

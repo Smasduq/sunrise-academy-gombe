@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { AdminShell } from '@/components/AdminShell';
+import { AdminDataProvider } from '@/components/AdminDataProvider';
 import { Providers } from '@/components/Providers';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -11,9 +12,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <Providers session={session}>
-      <AdminShell displayName={session.user.displayName} email={session.user.identifier}>
-        {children}
-      </AdminShell>
+      <AdminDataProvider>
+        <AdminShell displayName={session.user.displayName} email={session.user.identifier}>
+          {children}
+        </AdminShell>
+      </AdminDataProvider>
     </Providers>
   );
 }

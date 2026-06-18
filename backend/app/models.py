@@ -447,3 +447,32 @@ class Admission(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
+
+
+class AdminActivityLog(Base):
+    __tablename__ = "admin_activity_logs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    admin_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    admin_name: Mapped[str] = mapped_column(String(150))
+    action: Mapped[str] = mapped_column(String(50), index=True)
+    entity_type: Mapped[str] = mapped_column(String(50), index=True)
+    entity_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    details: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)
+
+
+class SchoolSettings(Base):
+    __tablename__ = "school_settings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: "default")
+    school_name: Mapped[str] = mapped_column(String(200), default="Sunrise Academy Gombe")
+    address: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    academic_session: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    current_term: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )

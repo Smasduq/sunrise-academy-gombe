@@ -30,6 +30,8 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 /* Logo */
@@ -88,26 +90,38 @@
   color: rgba(255,255,255,0.7);
 }
 
-/* Desktop Nav */
+/* Desktop Nav — full bar from 1280px; tablet uses hamburger menu */
 .desktopNav {
   display: none;
   align-items: center;
   gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
 }
 
-@media (min-width: 1024px) {
-  .desktopNav { display: flex; }
+@media (min-width: 1280px) {
+  .inner {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: var(--space-4);
+  }
+
+  .desktopNav {
+    display: flex;
+  }
 }
 
 .navLink {
-  padding: var(--space-2) var(--space-3);
-  font-size: 0.9rem;
+  padding: var(--space-2) var(--space-2);
+  font-size: 0.85rem;
   font-weight: 500;
   color: var(--color-text);
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
   text-decoration: none;
   position: relative;
+  white-space: nowrap;
 }
 
 .navbar.transparent .navLink {
@@ -158,35 +172,40 @@
 .actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
 
 .themeToggle {
   width: 38px;
   height: 38px;
-  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg-alt);
-  border: 1px solid var(--color-border);
+  background: transparent;
+  border: none;
   color: var(--color-text);
   font-size: 1rem;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), transform var(--transition-fast);
   cursor: pointer;
+  padding: 0;
 }
 
 .navbar.transparent .themeToggle {
-  background: rgba(255,255,255,0.15);
-  border-color: rgba(255,255,255,0.3);
+  background: transparent;
+  border: none;
   color: white;
 }
 
 .themeToggle:hover {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  border: none;
   transform: scale(1.05);
+}
+
+.navbar.transparent .themeToggle:hover {
+  color: var(--color-secondary-light);
 }
 
 .applyBtn {
@@ -194,11 +213,37 @@
 }
 
 .portalBtn {
-  display: inline-flex;
+  display: none;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .applyBtn { display: inline-flex; }
+  .portalBtn { display: inline-flex; }
+}
+
+.applyBtn,
+.portalBtn {
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.75rem !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.applyLabelShort,
+.portalLabelShort {
+  display: none;
+}
+
+@media (min-width: 1280px) and (max-width: 1440px) {
+  .applyLabelFull,
+  .portalLabelFull {
+    display: none;
+  }
+
+  .applyLabelShort,
+  .portalLabelShort {
+    display: inline;
+  }
 }
 
 .navbar.transparent .portalBtn {
@@ -212,14 +257,14 @@
   border-color: white;
 }
 
-/* Hamburger */
+/* Hamburger — visible on mobile/tablet only */
 .hamburger {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  width: 38px;
-  height: 38px;
-  padding: 8px;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   background: var(--color-bg-alt);
@@ -227,6 +272,9 @@
   justify-content: center;
   align-items: center;
   transition: all var(--transition-fast);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
 }
 
 .navbar.transparent .hamburger {
@@ -243,7 +291,7 @@
   background: white;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .hamburger { display: none; }
 }
 
@@ -253,6 +301,7 @@
   background: var(--color-text);
   border-radius: 2px;
   transition: all var(--transition-fast);
+  pointer-events: none;
 }
 
 .navbar.transparent .bar {
@@ -284,10 +333,14 @@
   z-index: calc(var(--z-sticky) - 1);
   padding: var(--space-6) var(--space-4);
   border-top: 1px solid var(--color-border);
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .mobileDrawer.open {
   transform: translateX(0);
+  pointer-events: auto;
+  visibility: visible;
 }
 
 .mobileNavLinks {
@@ -351,4 +404,66 @@
 .overlay.visible {
   opacity: 1;
   pointer-events: all;
+}
+
+@media (max-width: 1279px) {
+  .actions {
+    gap: var(--space-2);
+  }
+
+  .themeToggle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  .logoSub {
+    display: none;
+  }
+}
+
+/* Compact desktop header for narrower laptops / large tablets in landscape */
+@media (min-width: 1280px) and (max-width: 1440px) {
+  .logoSub {
+    display: none;
+  }
+
+  .logoName {
+    font-size: 0.9rem;
+  }
+
+  .logoIcon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .logo {
+    gap: var(--space-2);
+  }
+
+  .navLink {
+    font-size: 0.72rem;
+    padding: var(--space-1) 0.35rem;
+  }
+
+  .desktopNav {
+    gap: 0;
+  }
+
+  .applyBtn,
+  .portalBtn {
+    padding: 0.38rem 0.65rem !important;
+    font-size: 0.7rem !important;
+  }
+
+  .actions {
+    gap: var(--space-1);
+  }
+
+  .inner {
+    gap: var(--space-2);
+  }
 }

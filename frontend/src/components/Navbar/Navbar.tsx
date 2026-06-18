@@ -94,6 +94,7 @@ export default function Navbar() {
           {/* Actions */}
           <div className={styles.actions}>
             <button
+              type="button"
               className={styles.themeToggle}
               onClick={toggleDark}
               aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -102,15 +103,18 @@ export default function Navbar() {
               {darkMode ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
             </button>
 
-            <Link href="/admissions" className={`btn btn-primary btn-sm ${styles.applyBtn}`}>
-              Apply Now
+            <Link href="/admissions" className={`btn btn-primary ${styles.applyBtn}`}>
+              <span className={styles.applyLabelFull}>Apply Now</span>
+              <span className={styles.applyLabelShort}>Apply</span>
             </Link>
 
-            <Link href="/login" className={`btn btn-outline btn-sm ${styles.portalBtn}`}>
-              Portal Login
+            <Link href="/login" className={`btn btn-outline ${styles.portalBtn}`}>
+              <span className={styles.portalLabelFull}>Portal Login</span>
+              <span className={styles.portalLabelShort}>Portal</span>
             </Link>
 
             <button
+              type="button"
               className={styles.hamburger}
               onClick={() => setMenuOpen((v) => !v)}
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}

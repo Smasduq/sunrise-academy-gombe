@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { adminApi, ApiError, ClassOption, StudentRecord } from '@/lib/api';
+import { adminApi, ApiError, StudentRecord } from '@/lib/api';
+import { useAdminData } from '@/components/AdminDataProvider';
 import styles from '@/components/crud.module.css';
 
 const EMPTY_FORM = {
@@ -22,33 +23,32 @@ export function StudentsClient() {
   const { data: session } = useSession();
   const token = session?.accessToken ?? '';
 
-  const [students, setStudents] = useState<StudentRecord[]>([]);
-  const [classes, setClasses] = useState<ClassOption[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    students,
+    classes,
+    studentsLoading,
+    studentsLoaded,
+    error: loadError,
+    loadStudents,
+    loadClasses,
+    setStudents,
+  } = useAdminData();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<StudentRecord | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-
-  const load = useCallback(async () => {
-    if (!token) return;
-    setLoading(true);
-    try {
-      const api = adminApi(token);
-      const [studentList, classList] = await Promise.all([api.students(), api.classes()]);
-      setStudents(studentList);
-      setClasses(classList);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load students');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+  const [search, setSearch] = useState('');
+  const [classFilter, setClassFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [profile, setProfile] = useState<StudentRecord | null>(null);
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    load();
-  }, [load]);
+    loadClasses();
+    loadStudents();
+  }, [loadClasses, loadStudents]);
 
   function openCreate() {
     setEditing(null);
@@ -104,7 +104,8 @@ export function StudentsClient() {
     try {
       if (editing) {
         if (form.password) body.password = form.password;
-        await api.updateStudent(editing.id, body);
+        const updated = await api.updateStudent(editing.id, body);
+        setStudents((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
       } else {
         if (!form.password || form.password.length < 8) {
           setError('Password must be at least 8 characters.');
@@ -112,10 +113,12 @@ export function StudentsClient() {
           return;
         }
         body.password = form.password;
-        await api.createStudent(body);
+        const created = await api.createStudent(body);
+        setStudents((prev) => [...prev, created]);
       }
       closeModal();
-      await load();
+      setSuccess(editing ? 'Student updated.' : 'Student added.');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Save failed');
     } finally {
@@ -129,25 +132,91 @@ export function StudentsClient() {
 
     try {
       await adminApi(token).deleteStudent(student.id);
-      await load();
+      setStudents((prev) => prev.filter((s) => s.id !== student.id));
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'Delete failed');
     }
   }
 
+  const showLoading = studentsLoading && !studentsLoaded;
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return students.filter((s) => {
+      if (classFilter && s.class_id !== classFilter) return false;
+      if (statusFilter && s.status !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        s.admission_number.toLowerCase().includes(q) ||
+        s.first_name.toLowerCase().includes(q) ||
+        s.last_name.toLowerCase().includes(q) ||
+        (s.guardian_name?.toLowerCase().includes(q) ?? false)
+      );
+    });
+  }, [students, search, classFilter, statusFilter]);
+
   return (
     <div className={styles.panel}>
       <div className={styles.panelHeader}>
         <h2 className={styles.panelTitle}>All students ({students.length})</h2>
-        <button type="button" className={styles.primaryBtn} onClick={openCreate}>
-          Add student
-        </button>
+        <div className={styles.panelActions}>
+          <button
+            type="button"
+            className={styles.reloadBtn}
+            onClick={() => {
+              loadClasses(true);
+              loadStudents(true);
+            }}
+            disabled={studentsLoading}
+          >
+            {studentsLoading ? 'Reloading…' : 'Reload'}
+          </button>
+          <button type="button" className={styles.primaryBtn} onClick={openCreate}>
+            Add student
+          </button>
+        </div>
       </div>
 
-      {loading ? (
+      {success && <div className={styles.successBanner} style={{ margin: '0 24px' }}>{success}</div>}
+      {loadError && <div className={styles.formError} style={{ margin: '16px 24px 0' }}>{loadError}</div>}
+
+      <div className={styles.toolbar}>
+        <input
+          type="search"
+          className={styles.searchInput}
+          placeholder="Search by name, admission no., or guardian…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select
+          className={styles.filterSelect}
+          value={classFilter}
+          onChange={(e) => setClassFilter(e.target.value)}
+        >
+          <option value="">All classes</option>
+          {classes.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <select
+          className={styles.filterSelect}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All statuses</option>
+          <option value="ACTIVE">Active</option>
+          <option value="SUSPENDED">Inactive</option>
+        </select>
+      </div>
+
+      {showLoading ? (
         <div className={styles.empty}>Loading…</div>
-      ) : students.length === 0 ? (
-        <div className={styles.empty}>No students yet. Add the first student.</div>
+      ) : filtered.length === 0 ? (
+        <div className={styles.empty}>
+          {students.length === 0 ? 'No students yet. Add the first student.' : 'No students match your search.'}
+        </div>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -162,7 +231,7 @@ export function StudentsClient() {
               </tr>
             </thead>
             <tbody>
-              {students.map((student) => (
+              {filtered.map((student) => (
                 <tr key={student.id}>
                   <td>{student.admission_number}</td>
                   <td>
@@ -181,6 +250,9 @@ export function StudentsClient() {
                   </td>
                   <td>
                     <div className={styles.actions}>
+                      <button type="button" className={styles.secondaryBtn} onClick={() => setProfile(student)}>
+                        View
+                      </button>
                       <button type="button" className={styles.secondaryBtn} onClick={() => openEdit(student)}>
                         Edit
                       </button>
@@ -319,6 +391,66 @@ export function StudentsClient() {
             </form>
           </div>
         </div>
+      )}
+
+      {profile && (
+        <>
+          <button type="button" className={styles.drawerOverlay} aria-label="Close" onClick={() => setProfile(null)} />
+          <aside className={styles.drawer}>
+            <div className={styles.avatarLarge}>
+              {profile.first_name.charAt(0)}
+              {profile.last_name.charAt(0)}
+            </div>
+            <h3 className={styles.drawerTitle}>
+              {profile.first_name} {profile.last_name}
+            </h3>
+            <div className={styles.profileGrid}>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Admission No.</span>
+                <span className={styles.profileValue}>{profile.admission_number}</span>
+              </div>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Class</span>
+                <span className={styles.profileValue}>{profile.class_name ?? '—'}</span>
+              </div>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Status</span>
+                <span className={styles.profileValue}>{profile.status}</span>
+              </div>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Gender</span>
+                <span className={styles.profileValue}>{profile.gender ?? '—'}</span>
+              </div>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Guardian</span>
+                <span className={styles.profileValue}>{profile.guardian_name ?? '—'}</span>
+              </div>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Guardian phone</span>
+                <span className={styles.profileValue}>{profile.guardian_phone ?? '—'}</span>
+              </div>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Address</span>
+                <span className={styles.profileValue}>{profile.address ?? '—'}</span>
+              </div>
+            </div>
+            <div className={styles.modalActions} style={{ border: 'none', paddingTop: 16 }}>
+              <button type="button" className={styles.secondaryBtn} onClick={() => setProfile(null)}>
+                Close
+              </button>
+              <button
+                type="button"
+                className={styles.primaryBtn}
+                onClick={() => {
+                  openEdit(profile);
+                  setProfile(null);
+                }}
+              >
+                Edit profile
+              </button>
+            </div>
+          </aside>
+        </>
       )}
     </div>
   );

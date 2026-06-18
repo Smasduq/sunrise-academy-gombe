@@ -2,10 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from typing import Annotated
 
+from app.admin_helpers import log_admin_activity
 from app.auth.deps import CurrentUser, require_role
 from app.auth.security import hash_password
 from app.database import get_db
 from app.models import Class, Role, Staff, StaffClass, Student, User, UserStatus
+from app.school_classes import SCHOOL_CLASS_NAMES, sort_school_classes
 from app.schemas_admin import (
     AdminStatsOut,
     ClassOption,
@@ -58,9 +60,20 @@ def _staff_out(staff: Staff) -> StaffOut:
 def _sync_staff_classes(db: Session, staff: Staff, class_ids: list[str]) -> None:
     db.query(StaffClass).filter(StaffClass.staff_id == staff.id).delete()
     for class_id in class_ids:
-        exists = db.query(Class).filter(Class.id == class_id).first()
-        if exists:
+        cls = db.query(Class).filter(Class.id == class_id).first()
+        if cls and cls.name in SCHOOL_CLASS_NAMES:
             db.add(StaffClass(staff_id=staff.id, class_id=class_id))
+
+
+def _validate_class_id(db: Session, class_id: str | None) -> None:
+    if not class_id:
+        return
+    cls = db.query(Class).filter(Class.id == class_id).first()
+    if not cls or cls.name not in SCHOOL_CLASS_NAMES:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid class. Choose Nursery 1, Nursery 2, Primary 1, Primary 2, or Primary 3.",
+        )
 
 
 @router.get("/stats", response_model=AdminStatsOut)
@@ -71,7 +84,7 @@ def get_stats(
     return AdminStatsOut(
         students=db.query(Student).count(),
         staff=db.query(Staff).count(),
-        classes=db.query(Class).count(),
+        classes=len(sort_school_classes(db.query(Class).all())),
     )
 
 
@@ -80,7 +93,7 @@ def list_classes(
     _: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
     db: Annotated[Session, Depends(get_db)],
 ):
-    classes = db.query(Class).order_by(Class.level, Class.name).all()
+    classes = sort_school_classes(db.query(Class).all())
     return [
         ClassOption(id=c.id, name=c.name, level=c.level, section=c.section) for c in classes
     ]
@@ -103,11 +116,13 @@ def list_students(
 @router.post("/students", response_model=StudentOut, status_code=status.HTTP_201_CREATED)
 def create_student(
     payload: StudentCreateRequest,
-    _: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
+    user: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
     db: Annotated[Session, Depends(get_db)],
 ):
     if db.query(Student).filter(Student.admission_number == payload.admission_number.upper()).first():
         raise HTTPException(status_code=400, detail="Admission number already exists")
+
+    _validate_class_id(db, payload.class_id)
 
     user = User(
         password_hash=hash_password(payload.password),
@@ -129,6 +144,14 @@ def create_student(
         address=payload.address,
     )
     db.add(student)
+    log_admin_activity(
+        db,
+        user,
+        action="CREATE",
+        entity_type="student",
+        entity_id=student.id,
+        details=f"{student.first_name} {student.last_name}",
+    )
     db.commit()
     db.refresh(student)
     student = (
@@ -161,7 +184,7 @@ def get_student(
 def update_student(
     student_id: str,
     payload: StudentUpdateRequest,
-    _: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
+    user: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
     db: Annotated[Session, Depends(get_db)],
 ):
     student = (
@@ -190,6 +213,7 @@ def update_student(
     if payload.last_name:
         student.last_name = payload.last_name
     if payload.class_id is not None:
+        _validate_class_id(db, payload.class_id or None)
         student.class_id = payload.class_id or None
     if payload.guardian_name is not None:
         student.guardian_name = payload.guardian_name
@@ -204,6 +228,14 @@ def update_student(
     if payload.password:
         student.user.password_hash = hash_password(payload.password)
 
+    log_admin_activity(
+        db,
+        user,
+        action="UPDATE",
+        entity_type="student",
+        entity_id=student.id,
+        details=f"{student.first_name} {student.last_name}",
+    )
     db.commit()
     db.refresh(student)
     return _student_out(student)
@@ -212,12 +244,20 @@ def update_student(
 @router.delete("/students/{student_id}")
 def delete_student(
     student_id: str,
-    _: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
+    user: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
     db: Annotated[Session, Depends(get_db)],
 ):
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
+    log_admin_activity(
+        db,
+        user,
+        action="DELETE",
+        entity_type="student",
+        entity_id=student.id,
+        details=f"{student.first_name} {student.last_name}",
+    )
     db.delete(student.user)
     db.commit()
     return {"message": "Student deleted"}
@@ -243,7 +283,7 @@ def list_staff(
 @router.post("/staff", response_model=StaffOut, status_code=status.HTTP_201_CREATED)
 def create_staff(
     payload: StaffCreateRequest,
-    _: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
+    user: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
     db: Annotated[Session, Depends(get_db)],
 ):
     if db.query(Staff).filter(Staff.staff_id == payload.staff_id.upper()).first():
@@ -269,6 +309,14 @@ def create_staff(
     db.add(staff)
     db.flush()
     _sync_staff_classes(db, staff, payload.class_ids)
+    log_admin_activity(
+        db,
+        user,
+        action="CREATE",
+        entity_type="staff",
+        entity_id=staff.id,
+        details=f"{staff.first_name} {staff.last_name}",
+    )
     db.commit()
 
     staff = (
@@ -307,7 +355,7 @@ def get_staff_member(
 def update_staff(
     staff_id: str,
     payload: StaffUpdateRequest,
-    _: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
+    user: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
     db: Annotated[Session, Depends(get_db)],
 ):
     staff = (
@@ -348,6 +396,14 @@ def update_staff(
     if payload.class_ids is not None:
         _sync_staff_classes(db, staff, payload.class_ids)
 
+    log_admin_activity(
+        db,
+        user,
+        action="UPDATE",
+        entity_type="staff",
+        entity_id=staff.id,
+        details=f"{staff.first_name} {staff.last_name}",
+    )
     db.commit()
     db.refresh(staff)
     staff = (
@@ -365,12 +421,20 @@ def update_staff(
 @router.delete("/staff/{staff_id}")
 def delete_staff(
     staff_id: str,
-    _: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
+    user: Annotated[CurrentUser, Depends(require_role(Role.ADMIN))],
     db: Annotated[Session, Depends(get_db)],
 ):
     staff = db.query(Staff).filter(Staff.id == staff_id).first()
     if not staff:
         raise HTTPException(status_code=404, detail="Staff not found")
+    log_admin_activity(
+        db,
+        user,
+        action="DELETE",
+        entity_type="staff",
+        entity_id=staff.id,
+        details=f"{staff.first_name} {staff.last_name}",
+    )
     db.delete(staff.user)
     db.commit()
     return {"message": "Staff deleted"}

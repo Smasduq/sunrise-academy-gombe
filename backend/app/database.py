@@ -13,7 +13,17 @@ class Base(DeclarativeBase):
 
 
 connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
-engine = create_engine(settings.database_url, connect_args=connect_args)
+
+if settings.database_url.startswith("sqlite"):
+    engine = create_engine(settings.database_url, connect_args=connect_args)
+else:
+    engine = create_engine(
+        settings.database_url,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=5,
+        max_overflow=10,
+    )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -35,10 +45,19 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db() -> None:
     import app.models  # noqa: F401
+    from app.admin_helpers import get_or_create_settings
+    from app.school_classes import ensure_school_classes
 
     if settings.database_url.startswith("sqlite"):
         db_path = settings.database_url.replace("sqlite:///", "")
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
     Base.metadata.create_all(bind=engine)
+
+    db = SessionLocal()
+    try:
+        ensure_school_classes(db)
+        get_or_create_settings(db)
+    finally:
+        db.close()
 

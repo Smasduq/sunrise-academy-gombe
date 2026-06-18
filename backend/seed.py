@@ -88,9 +88,13 @@ def seed() -> None:
         db.add_all([first_term, second_term])
         db.flush()
 
-        primary3 = Class(name="Primary 3", level="Primary", section="A", capacity=30)
-        primary5 = Class(name="Primary 5", level="Primary", section="B", capacity=30)
-        db.add_all([primary3, primary5])
+        nursery1 = Class(name="Nursery 1", level="Nursery", capacity=30)
+        nursery2 = Class(name="Nursery 2", level="Nursery", capacity=30)
+        primary1 = Class(name="Primary 1", level="Primary", capacity=30)
+        primary2 = Class(name="Primary 2", level="Primary", capacity=30)
+        primary3 = Class(name="Primary 3", level="Primary", capacity=30)
+        school_classes = [nursery1, nursery2, primary1, primary2, primary3]
+        db.add_all(school_classes)
         db.flush()
 
         subjects = [
@@ -103,7 +107,7 @@ def seed() -> None:
         db.add_all(subjects)
         db.flush()
 
-        for cls in [primary3, primary5]:
+        for cls in school_classes:
             for subject in subjects:
                 db.add(ClassSubject(class_id=cls.id, subject_id=subject.id))
 

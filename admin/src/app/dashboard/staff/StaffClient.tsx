@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { adminApi, ApiError, ClassOption, StaffRecord } from '@/lib/api';
+import { adminApi, ApiError, StaffRecord } from '@/lib/api';
+import { useAdminData } from '@/components/AdminDataProvider';
 import styles from '@/components/crud.module.css';
 
 const POSITIONS = [
@@ -14,7 +15,7 @@ const POSITIONS = [
   'Administrator',
 ];
 
-const DEPARTMENTS = ['Primary', 'Secondary', 'Administration', 'Support'];
+const DEPARTMENTS = ['Nursery', 'Primary', 'Administration', 'Support'];
 
 const EMPTY_FORM = {
   staff_id: '',
@@ -32,33 +33,31 @@ export function StaffClient() {
   const { data: session } = useSession();
   const token = session?.accessToken ?? '';
 
-  const [staffList, setStaffList] = useState<StaffRecord[]>([]);
-  const [classes, setClasses] = useState<ClassOption[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    staff,
+    classes,
+    staffLoading,
+    staffLoaded,
+    error: loadError,
+    loadStaff,
+    loadClasses,
+    setStaff,
+  } = useAdminData();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<StaffRecord | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-
-  const load = useCallback(async () => {
-    if (!token) return;
-    setLoading(true);
-    try {
-      const api = adminApi(token);
-      const [list, classList] = await Promise.all([api.staff(), api.classes()]);
-      setStaffList(list);
-      setClasses(classList);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load staff');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+  const [search, setSearch] = useState('');
+  const [deptFilter, setDeptFilter] = useState('');
+  const [profile, setProfile] = useState<StaffRecord | null>(null);
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    load();
-  }, [load]);
+    loadClasses();
+    loadStaff();
+  }, [loadClasses, loadStaff]);
 
   function openCreate() {
     setEditing(null);
@@ -121,7 +120,8 @@ export function StaffClient() {
     try {
       if (editing) {
         if (form.password) body.password = form.password;
-        await api.updateStaff(editing.id, body);
+        const updated = await api.updateStaff(editing.id, body);
+        setStaff((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
       } else {
         if (!form.password || form.password.length < 8) {
           setError('Password must be at least 8 characters.');
@@ -129,10 +129,12 @@ export function StaffClient() {
           return;
         }
         body.password = form.password;
-        await api.createStaff(body);
+        const created = await api.createStaff(body);
+        setStaff((prev) => [...prev, created]);
       }
       closeModal();
-      await load();
+      setSuccess(editing ? 'Staff updated.' : 'Staff added.');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Save failed');
     } finally {
@@ -146,25 +148,81 @@ export function StaffClient() {
 
     try {
       await adminApi(token).deleteStaff(member.id);
-      await load();
+      setStaff((prev) => prev.filter((m) => m.id !== member.id));
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'Delete failed');
     }
   }
 
+  const showLoading = staffLoading && !staffLoaded;
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return staff.filter((m) => {
+      if (deptFilter && m.department !== deptFilter) return false;
+      if (!q) return true;
+      return (
+        m.staff_id.toLowerCase().includes(q) ||
+        m.first_name.toLowerCase().includes(q) ||
+        m.last_name.toLowerCase().includes(q) ||
+        (m.position?.toLowerCase().includes(q) ?? false)
+      );
+    });
+  }, [staff, search, deptFilter]);
+
   return (
     <div className={styles.panel}>
       <div className={styles.panelHeader}>
-        <h2 className={styles.panelTitle}>All staff ({staffList.length})</h2>
-        <button type="button" className={styles.primaryBtn} onClick={openCreate}>
-          Add staff
-        </button>
+        <h2 className={styles.panelTitle}>All staff ({staff.length})</h2>
+        <div className={styles.panelActions}>
+          <button
+            type="button"
+            className={styles.reloadBtn}
+            onClick={() => {
+              loadClasses(true);
+              loadStaff(true);
+            }}
+            disabled={staffLoading}
+          >
+            {staffLoading ? 'Reloading…' : 'Reload'}
+          </button>
+          <button type="button" className={styles.primaryBtn} onClick={openCreate}>
+            Add staff
+          </button>
+        </div>
       </div>
 
-      {loading ? (
+      {success && <div className={styles.successBanner} style={{ margin: '0 24px' }}>{success}</div>}
+      {loadError && <div className={styles.formError} style={{ margin: '16px 24px 0' }}>{loadError}</div>}
+
+      <div className={styles.toolbar}>
+        <input
+          type="search"
+          className={styles.searchInput}
+          placeholder="Search by name, staff ID, or role…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select
+          className={styles.filterSelect}
+          value={deptFilter}
+          onChange={(e) => setDeptFilter(e.target.value)}
+        >
+          <option value="">All departments</option>
+          {DEPARTMENTS.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {showLoading ? (
         <div className={styles.empty}>Loading…</div>
-      ) : staffList.length === 0 ? (
-        <div className={styles.empty}>No staff yet. Add the first staff member.</div>
+      ) : filtered.length === 0 ? (
+        <div className={styles.empty}>
+          {staff.length === 0 ? 'No staff yet. Add the first staff member.' : 'No staff match your search.'}
+        </div>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -180,7 +238,7 @@ export function StaffClient() {
               </tr>
             </thead>
             <tbody>
-              {staffList.map((member) => (
+              {filtered.map((member) => (
                 <tr key={member.id}>
                   <td>{member.staff_id}</td>
                   <td>
@@ -200,6 +258,9 @@ export function StaffClient() {
                   </td>
                   <td>
                     <div className={styles.actions}>
+                      <button type="button" className={styles.secondaryBtn} onClick={() => setProfile(member)}>
+                        View
+                      </button>
                       <button type="button" className={styles.secondaryBtn} onClick={() => openEdit(member)}>
                         Edit
                       </button>
@@ -344,6 +405,64 @@ export function StaffClient() {
             </form>
           </div>
         </div>
+      )}
+
+      {profile && (
+        <>
+          <button type="button" className={styles.drawerOverlay} aria-label="Close" onClick={() => setProfile(null)} />
+          <aside className={styles.drawer}>
+            <div className={styles.avatarLarge}>
+              {profile.first_name.charAt(0)}
+              {profile.last_name.charAt(0)}
+            </div>
+            <h3 className={styles.drawerTitle}>
+              {profile.first_name} {profile.last_name}
+            </h3>
+            <div className={styles.profileGrid}>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Staff ID</span>
+                <span className={styles.profileValue}>{profile.staff_id}</span>
+              </div>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Role</span>
+                <span className={styles.profileValue}>{profile.position ?? '—'}</span>
+              </div>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Department</span>
+                <span className={styles.profileValue}>{profile.department ?? '—'}</span>
+              </div>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Classes</span>
+                <span className={styles.profileValue}>
+                  {profile.class_names.length ? profile.class_names.join(', ') : '—'}
+                </span>
+              </div>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Phone</span>
+                <span className={styles.profileValue}>{profile.phone ?? '—'}</span>
+              </div>
+              <div className={styles.profileRow}>
+                <span className={styles.profileLabel}>Status</span>
+                <span className={styles.profileValue}>{profile.status}</span>
+              </div>
+            </div>
+            <div className={styles.modalActions} style={{ border: 'none', paddingTop: 16 }}>
+              <button type="button" className={styles.secondaryBtn} onClick={() => setProfile(null)}>
+                Close
+              </button>
+              <button
+                type="button"
+                className={styles.primaryBtn}
+                onClick={() => {
+                  openEdit(profile);
+                  setProfile(null);
+                }}
+              >
+                Edit profile
+              </button>
+            </div>
+          </aside>
+        </>
       )}
     </div>
   );

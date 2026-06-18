@@ -102,3 +102,109 @@ class AdminStatsOut(BaseModel):
     students: int
     staff: int
     classes: int
+
+
+class ActivityLogOut(BaseModel):
+    id: str
+    admin_name: str
+    action: str
+    entity_type: str
+    entity_id: str | None
+    details: str | None
+    created_at: datetime
+
+
+class AnnouncementAdminOut(BaseModel):
+    id: str
+    title: str
+    content: str
+    audience: str
+    is_active: bool
+    created_at: datetime
+
+
+class AnnouncementCreateRequest(BaseModel):
+    title: str = Field(min_length=3)
+    content: str = Field(min_length=3)
+    audience: str = "ALL"
+    is_active: bool = True
+
+
+class AnnouncementUpdateRequest(BaseModel):
+    title: str | None = None
+    content: str | None = None
+    audience: str | None = None
+    is_active: bool | None = None
+
+
+class AdmissionOut(BaseModel):
+    id: str
+    application_no: str
+    first_name: str
+    last_name: str
+    date_of_birth: datetime
+    gender: str
+    guardian_name: str
+    guardian_phone: str
+    guardian_email: str | None
+    address: str | None
+    previous_school: str | None
+    class_applied: str
+    status: str
+    created_at: datetime
+
+
+class AdmissionUpdateRequest(BaseModel):
+    status: str = Field(pattern="^(PENDING|APPROVED|REJECTED)$")
+
+
+class SchoolSettingsOut(BaseModel):
+    school_name: str
+    address: str | None
+    phone: str | None
+    email: str | None
+    logo_url: str | None
+    academic_session: str | None
+    current_term: str | None
+
+
+class SchoolSettingsUpdateRequest(BaseModel):
+    school_name: str | None = None
+    address: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    logo_url: str | None = None
+    academic_session: str | None = None
+    current_term: str | None = None
+
+
+class StorageStatusOut(BaseModel):
+    configured: bool
+    connected: bool
+    bucket_id: str | None = None
+    private: bool | None = None
+    total_files: int | None = None
+    size_bytes: int | None = None
+    message: str
+
+
+class UploadImageOut(BaseModel):
+    url: str
+    folder: str
+
+
+class DashboardOverviewOut(BaseModel):
+    students: int
+    staff: int
+    classes: int
+    admissions_pending: int
+    admissions_approved: int
+    admissions_rejected: int
+    admissions_total: int
+    attendance_present_today: int
+    attendance_absent_today: int
+    attendance_late_today: int
+    academic_session: str | None
+    current_term: str | None
+    recent_activities: list[ActivityLogOut]
+    announcements: list[AnnouncementAdminOut]

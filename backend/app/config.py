@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     secret_key: str = ""
     access_token_expire_minutes: int = 60 * 24
     cors_origins: str = "http://127.0.0.1:3000,http://localhost:3000,http://127.0.0.1:3001,http://localhost:3001"
+    hf_token: str = ""
+    hf_bucket_id: str = ""  # e.g. your-username/sunrise-academy-gombe
 
     @property
     def cors_origin_list(self) -> list[str]:
