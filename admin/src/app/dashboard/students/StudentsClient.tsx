@@ -441,7 +441,7 @@ export function StudentsClient() {
         </div>
       </div>
 
-      <div className={crud.panel}>
+      <div className={`${crud.panel} ${styles.studentsPanel}`}>
         {selected.size > 0 && (
           <div className={styles.bulkBar}>
             <span>{selected.size} selected</span>
@@ -579,21 +579,43 @@ export function StudentsClient() {
                       aria-label={`Select ${fullName(student)}`}
                     />
                     <StudentPhoto student={student} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <strong style={{ display: 'block', color: '#0b3d6d' }}>
+                    <div className={styles.mobileCardInfo}>
+                      <strong className={styles.mobileCardName}>
                         <Link href={`/dashboard/students/${student.id}`}>{fullName(student)}</Link>
                       </strong>
-                      <span style={{ fontSize: 12, color: '#6b7c93' }}>{student.admission_number}</span>
+                      <span className={styles.mobileCardSub}>{student.admission_number}</span>
                     </div>
-                    <span
-                      className={`${crud.badge} ${
-                        student.status === 'ACTIVE' && !student.is_archived ? crud.badgeActive : crud.badgeSuspended
-                      }`}
-                    >
-                      {student.is_archived ? 'Archived' : student.status === 'ACTIVE' ? 'Active' : 'Inactive'}
-                    </span>
+                    <div className={styles.mobileCardActions}>
+                      <ActionsMenu
+                        student={student}
+                        onEdit={() => openEdit(student)}
+                        onPromote={() => {
+                          setPromoteIds([student.id]);
+                          setPromoteOpen(true);
+                        }}
+                        onArchive={() => requestArchive(student)}
+                        onDelete={() => requestDelete(student)}
+                        onPrint={() => handlePrintCard(student)}
+                      />
+                    </div>
                   </div>
                   <div className={styles.mobileMeta}>
+                    <div>
+                      <span>Status</span>
+                      <strong>
+                        <span
+                          className={`${crud.badge} ${
+                            student.is_archived
+                              ? crud.badgeSuspended
+                              : student.status === 'ACTIVE'
+                                ? crud.badgeActive
+                                : crud.badgeSuspended
+                          }`}
+                        >
+                          {student.is_archived ? 'Archived' : student.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+                        </span>
+                      </strong>
+                    </div>
                     <div><span>Class</span><strong>{student.class_name ?? '—'}</strong></div>
                     <div><span>Parent</span><strong>{student.guardian_name ?? '—'}</strong></div>
                     <div><span>Phone</span><strong>{student.guardian_phone ?? '—'}</strong></div>
@@ -605,20 +627,6 @@ export function StudentsClient() {
                           : new Date(student.created_at).toLocaleDateString()}
                       </strong>
                     </div>
-                  </div>
-                  <div className={styles.mobileActions}>
-                    <Link href={`/dashboard/students/${student.id}`} className={crud.secondaryBtn}>View</Link>
-                    <button type="button" className={crud.secondaryBtn} onClick={() => openEdit(student)}>Edit</button>
-                    <button
-                      type="button"
-                      className={crud.secondaryBtn}
-                      onClick={() => {
-                        setPromoteIds([student.id]);
-                        setPromoteOpen(true);
-                      }}
-                    >
-                      Promote
-                    </button>
                   </div>
                 </div>
               ))}
