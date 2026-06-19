@@ -11,8 +11,9 @@ import styles from '@/components/students/students.module.css';
 
 export function StudentResultsClient() {
   const { id } = useParams<{ id: string }>();
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const isAuthenticated = status === 'authenticated';
+  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
 
   const [student, setStudent] = useState<StudentRecord | null>(null);
   const [data, setData] = useState<StudentResultsData | null>(null);
@@ -24,23 +25,33 @@ export function StudentResultsClient() {
 
   useEffect(() => {
     if (!isAuthenticated || !id) return;
-    adminApi()
+    adminApi(token)
       .studentProfile(id)
       .then((p) => setStudent(p.student))
-      .catch(() => null);
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+        }
+      });
   }, [isAuthenticated, id]);
 
   useEffect(() => {
     if (!isAuthenticated || !id) return;
     setLoading(true);
-    adminApi()
+    adminApi(token)
       .studentResults(id, {
         session_name: sessionFilter || undefined,
         term_name: termFilter || undefined,
         search: search || undefined,
       })
       .then(setData)
-      .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load results'))
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        setError(err instanceof ApiError ? err.message : 'Failed to load results');
+      })
       .finally(() => setLoading(false));
   }, [isAuthenticated, id, sessionFilter, termFilter, search]);
 
@@ -49,7 +60,13 @@ export function StudentResultsClient() {
   async function handleDownload(resultId: string) {
     const result = data?.results.find((r) => r.id === resultId);
     if (!result || !student) return;
-    const settings = await adminApi().settings().catch(() => null);
+    const settings = await adminApi(token).settings().catch((err) => {
+      if (err instanceof ApiError && err.status === 401) {
+        window.location.href = '/login';
+        return null;
+      }
+      return null;
+    });
     printResultSlip(student, result, settings);
   }
 
@@ -63,7 +80,13 @@ export function StudentResultsClient() {
 
   async function handlePrintCard() {
     if (!student) return;
-    const settings = await adminApi().settings().catch(() => null);
+    const settings = await adminApi(token).settings().catch((err) => {
+      if (err instanceof ApiError && err.status === 401) {
+        window.location.href = '/login';
+        return null;
+      }
+      return null;
+    });
     openStudentIdCard(student, settings);
   }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { adminApi, ApiError, PromotePreviewItem } from '@/lib/api';
 import crud from '@/components/crud.module.css';
 import styles from './students.module.css';
@@ -18,6 +19,7 @@ export function PromoteModal({ studentIds, className, onClose, onDone }: Promote
   const [promoting, setPromoting] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ promoted: number; skipped: number } | null>(null);
+  const { status, data: session } = useSession();
 
   useEffect(() => {
     const body = studentIds.length
@@ -25,11 +27,17 @@ export function PromoteModal({ studentIds, className, onClose, onDone }: Promote
       : className
         ? { class_name: className }
         : { student_ids: [] };
-
-    adminApi()
+    const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
+    adminApi(token)
       .promotePreview(body)
       .then(setItems)
-      .catch((err) => setError(err instanceof ApiError ? err.message : 'Preview failed'))
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        setError(err instanceof ApiError ? err.message : 'Preview failed');
+      })
       .finally(() => setLoading(false));
   }, [studentIds, className]);
 
@@ -46,10 +54,15 @@ export function PromoteModal({ studentIds, className, onClose, onDone }: Promote
         : { student_ids: studentIds };
 
     try {
-      const res = await adminApi().promoteStudents(body);
+      const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
+      const res = await adminApi(token).promoteStudents(body);
       setResult({ promoted: res.promoted, skipped: res.skipped });
       setItems(res.items);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       setError(err instanceof ApiError ? err.message : 'Promotion failed');
     } finally {
       setPromoting(false);

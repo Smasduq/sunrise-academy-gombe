@@ -30,8 +30,9 @@ const EMPTY_FORM = {
 };
 
 export function StaffClient() {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const isAuthenticated = status === 'authenticated';
+  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
 
   const {
     staff,
@@ -105,7 +106,7 @@ export function StaffClient() {
     setSaving(true);
     setError('');
 
-    const api = adminApi();
+    const api = adminApi(token);
     const body: Record<string, unknown> = {
       staff_id: form.staff_id.trim(),
       first_name: form.first_name.trim(),
@@ -136,6 +137,10 @@ export function StaffClient() {
       setSuccess(editing ? 'Staff updated.' : 'Staff added.');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       setError(err instanceof ApiError ? err.message : 'Save failed');
     } finally {
       setSaving(false);
@@ -147,9 +152,13 @@ export function StaffClient() {
     if (!confirm(`Delete ${member.first_name} ${member.last_name}? This cannot be undone.`)) return;
 
     try {
-      await adminApi().deleteStaff(member.id);
+      await adminApi(token).deleteStaff(member.id);
       setStaff((prev) => prev.filter((m) => m.id !== member.id));
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       alert(err instanceof ApiError ? err.message : 'Delete failed');
     }
   }

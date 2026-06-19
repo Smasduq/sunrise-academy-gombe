@@ -86,8 +86,9 @@ function AttendanceCalendar({ records, month }: { records: StudentAttendanceData
 
 export function StudentAttendanceClient() {
   const { id } = useParams<{ id: string }>();
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const isAuthenticated = status === 'authenticated';
+  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
 
   const [student, setStudent] = useState<StudentRecord | null>(null);
   const [data, setData] = useState<StudentAttendanceData | null>(null);
@@ -99,23 +100,33 @@ export function StudentAttendanceClient() {
 
   useEffect(() => {
     if (!isAuthenticated || !id) return;
-    adminApi()
+    adminApi(token)
       .studentProfile(id)
       .then((p) => setStudent(p.student))
-      .catch(() => null);
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+        }
+      });
   }, [isAuthenticated, id]);
 
   useEffect(() => {
     if (!isAuthenticated || !id) return;
     setLoading(true);
-    adminApi()
+    adminApi(token)
       .studentAttendance(id, {
         month,
         session_name: sessionFilter || undefined,
         term_name: termFilter || undefined,
       })
       .then(setData)
-      .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load attendance'))
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        setError(err instanceof ApiError ? err.message : 'Failed to load attendance');
+      })
       .finally(() => setLoading(false));
   }, [isAuthenticated, id, month, sessionFilter, termFilter]);
 
@@ -129,7 +140,13 @@ export function StudentAttendanceClient() {
 
   async function handlePrintCard() {
     if (!student) return;
-    const settings = await adminApi().settings().catch(() => null);
+    const settings = await adminApi(token).settings().catch((err) => {
+      if (err instanceof ApiError && err.status === 401) {
+        window.location.href = '/login';
+        return null;
+      }
+      return null;
+    });
     openStudentIdCard(student, settings);
   }
 

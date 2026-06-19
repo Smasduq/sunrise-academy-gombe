@@ -32,8 +32,7 @@ export async function proxyToBackend(
   if (!backend) {
     return NextResponse.json(
       {
-        detail:
-          'BACKEND_API_URL is not set. Add it in Vercel env vars (your FastAPI URL). Do not use API_URL.',
+        detail: 'BACKEND_API_URL is not set. Add it in Vercel env vars.',
       },
       { status: 503 },
     );

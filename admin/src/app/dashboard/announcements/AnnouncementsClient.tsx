@@ -8,8 +8,9 @@ import styles from '@/components/crud.module.css';
 const EMPTY = { title: '', content: '', audience: 'ALL', is_active: true };
 
 export function AnnouncementsClient() {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const isAuthenticated = status === 'authenticated';
+  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
   const [list, setList] = useState<AnnouncementRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -22,8 +23,12 @@ export function AnnouncementsClient() {
     if (!isAuthenticated) return;
     setLoading(true);
     try {
-      setList(await adminApi().announcements());
+      setList(await adminApi(token).announcements());
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       setError(err instanceof ApiError ? err.message : 'Failed to load');
     } finally {
       setLoading(false);
@@ -58,7 +63,7 @@ export function AnnouncementsClient() {
     if (!isAuthenticated) return;
     setSaving(true);
     setError('');
-    const api = adminApi();
+    const api = adminApi(token);
     try {
       if (editing) {
         const updated = await api.updateAnnouncement(editing.id, form);
@@ -69,6 +74,10 @@ export function AnnouncementsClient() {
       }
       setModalOpen(false);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       setError(err instanceof ApiError ? err.message : 'Save failed');
     } finally {
       setSaving(false);
@@ -78,9 +87,13 @@ export function AnnouncementsClient() {
   async function handleDelete(id: string) {
     if (!isAuthenticated || !confirm('Delete this announcement?')) return;
     try {
-      await adminApi().deleteAnnouncement(id);
+      await adminApi(token).deleteAnnouncement(id);
       setList((prev) => prev.filter((a) => a.id !== id));
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       alert(err instanceof ApiError ? err.message : 'Delete failed');
     }
   }

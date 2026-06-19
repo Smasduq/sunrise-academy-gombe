@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { adminApi, ApiError, ClassOption, StudentRecord } from '@/lib/api';
 import crud from '@/components/crud.module.css';
 
@@ -40,6 +41,8 @@ export function EditStudentModal({
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const { status, data: session } = useSession();
+  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
 
   if (!open) return null;
 
@@ -47,9 +50,13 @@ export function EditStudentModal({
     setUploading(true);
     setError('');
     try {
-      const res = await adminApi().uploadImage(file, 'students');
+      const res = await adminApi(token).uploadImage(file, 'students');
       setForm((f) => ({ ...f, photo_url: res.url }));
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       setError(err instanceof ApiError ? err.message : 'Photo upload failed');
     } finally {
       setUploading(false);
@@ -86,10 +93,14 @@ export function EditStudentModal({
     if (form.password) body.password = form.password;
 
     try {
-      const updated = await adminApi().updateStudent(student.id, body);
+      const updated = await adminApi(token).updateStudent(student.id, body);
       onSaved(updated);
       onClose();
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       setError(err instanceof ApiError ? err.message : 'Save failed');
     } finally {
       setSaving(false);

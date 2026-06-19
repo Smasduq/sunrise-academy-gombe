@@ -22,8 +22,9 @@ import crud from '@/components/crud.module.css';
 
 export function StudentProfileClient() {
   const { id } = useParams<{ id: string }>();
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const isAuthenticated = status === 'authenticated';
+  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
   const { classes, loadClasses } = useAdminData();
 
   const [profile, setProfile] = useState<StudentProfile | null>(null);
@@ -46,13 +47,19 @@ export function StudentProfileClient() {
     setLoading(true);
     setError('');
 
-    adminApi()
+    adminApi(token)
       .studentProfile(id)
       .then((data) => {
         setProfile(data);
-        adminApi().logStudentView(id).catch(() => null);
+        adminApi(token).logStudentView(id).catch(() => null);
       })
-      .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load profile'))
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        setError(err instanceof ApiError ? err.message : 'Failed to load profile');
+      })
       .finally(() => setLoading(false));
   }, [isAuthenticated, id]);
 
@@ -61,16 +68,20 @@ export function StudentProfileClient() {
 
     setLoadingExtras(true);
     Promise.all([
-      adminApi().studentResults(id),
-      adminApi().studentAttendance(id),
-      adminApi().settings(),
+      adminApi(token).studentResults(id),
+      adminApi(token).studentAttendance(id),
+      adminApi(token).settings(),
     ])
       .then(([r, a, s]) => {
         setResults(r);
         setAttendance(a);
         setSettings(s);
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
         setResults(null);
         setAttendance(null);
         setSettings(null);
@@ -80,25 +91,39 @@ export function StudentProfileClient() {
 
   async function handlePrintCard() {
     if (!profile) return;
-    const schoolSettings = settings ?? (await adminApi().settings().catch(() => null));
+    const schoolSettings = settings ?? (await adminApi(token).settings().catch((err) => {
+      if (err instanceof ApiError && err.status === 401) {
+        window.location.href = '/login';
+        return null;
+      }
+      return null;
+    }));
     openStudentIdCard(profile.student, schoolSettings);
   }
 
   function refreshProfile() {
     if (!isAuthenticated || !id) return;
-    adminApi()
+    adminApi(token)
       .studentProfile(id)
       .then(setProfile)
-      .catch(() => null);
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+        }
+      });
     Promise.all([
-      adminApi().studentResults(id),
-      adminApi().studentAttendance(id),
+      adminApi(token).studentResults(id),
+      adminApi(token).studentAttendance(id),
     ])
       .then(([r, a]) => {
         setResults(r);
         setAttendance(a);
       })
-      .catch(() => null);
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+        }
+      });
   }
 
   if (loading) {

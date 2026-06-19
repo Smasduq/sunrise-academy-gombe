@@ -29,6 +29,10 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText }));
     const message = typeof body.detail === 'string' ? body.detail : 'Request failed';
+    // Propagate 401 explicitly so callers (client components) can redirect to /login
+    if (res.status === 401) {
+      throw new ApiError(message, 401);
+    }
     throw new ApiError(message, res.status);
   }
 

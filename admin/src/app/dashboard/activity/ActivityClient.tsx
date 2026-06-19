@@ -6,18 +6,25 @@ import { ActivityLog, adminApi, ApiError } from '@/lib/api';
 import styles from '@/components/crud.module.css';
 
 export function ActivityClient() {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const isAuthenticated = status === 'authenticated';
+  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    adminApi()
+    adminApi(token)
       .activityLogs()
       .then(setLogs)
-      .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load'))
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        setError(err instanceof ApiError ? err.message : 'Failed to load');
+      })
       .finally(() => setLoading(false));
   }, [isAuthenticated]);
 

@@ -1,27 +1,35 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { adminApi, ApiError, DashboardOverview } from '@/lib/api';
 import crud from '@/components/crud.module.css';
 import dash from '@/components/dashboard.module.css';
 
 export function DashboardClient() {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const [data, setData] = useState<DashboardOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
+
   useEffect(() => {
     if (status === 'loading') return;
 
-    adminApi()
+    adminApi(token)
       .dashboard()
       .then(setData)
-      .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load dashboard'))
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        setError(err instanceof ApiError ? err.message : 'Failed to load dashboard');
+      })
       .finally(() => setLoading(false));
-  }, [status]);
+  }, [status, token]);
 
   if (loading) {
     return <div className={crud.empty}>Loading dashboard…</div>;
@@ -67,7 +75,7 @@ export function DashboardClient() {
       <div className={dash.grid2}>
         <div className={crud.panel}>
           <div className={crud.panelHeader}>
-            <h2 className={crud.panelTitle}>Today&apos;s attendance</h2>
+            <h2 className={crud.panelTitle}>Today's attendance</h2>
             <Link href="/dashboard/attendance" className={crud.secondaryBtn}>
               View all
             </Link>
@@ -145,16 +153,14 @@ export function DashboardClient() {
             </Link>
           </div>
           {data.recent_activities.length === 0 ? (
-            <div className={crud.empty}>No activity recorded yet.</div>
+            <div className={dash.empty}>No activity recorded yet.</div>
           ) : (
             <ul className={dash.activityList}>
               {data.recent_activities.map((log) => (
                 <li key={log.id} className={dash.activityItem}>
                   <strong>{log.admin_name}</strong> {log.action.toLowerCase()}d {log.entity_type}
                   {log.details ? ` — ${log.details}` : ''}
-                  <div className={dash.activityMeta}>
-                    {new Date(log.created_at).toLocaleString()}
-                  </div>
+                  <div className={dash.activityMeta}>{new Date(log.created_at).toLocaleString()}</div>
                 </li>
               ))}
             </ul>
@@ -169,11 +175,11 @@ export function DashboardClient() {
             </Link>
           </div>
           {data.announcements.length === 0 ? (
-            <div className={crud.empty}>No active announcements.</div>
+            <div className={dash.empty}>No active announcements.</div>
           ) : (
             <ul className={dash.announcementList}>
               {data.announcements.map((a) => (
-                <li key={a.id} className={dash.announcementItem}>
+                <li key={a.id}>
                   <p className={dash.announcementTitle}>{a.title}</p>
                   <p className={dash.announcementBody}>{a.content}</p>
                 </li>

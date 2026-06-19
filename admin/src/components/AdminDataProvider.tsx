@@ -39,7 +39,7 @@ type AdminDataContextValue = {
 const AdminDataContext = createContext<AdminDataContextValue | null>(null);
 
 export function AdminDataProvider({ children }: { children: ReactNode }) {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
 
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [staff, setStaff] = useState<StaffRecord[]>([]);
@@ -70,14 +70,19 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       if (classesLoaded && !force) return;
 
       try {
-        const list = await adminApi().classes();
+        const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
+        const list = await adminApi(token).classes();
         setClasses(list);
         setClassesLoaded(true);
       } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
         setError(err instanceof ApiError ? err.message : 'Failed to load classes');
       }
     },
-    [isAuthenticated, classesLoaded]
+    [isAuthenticated, classesLoaded, session]
   );
 
   const loadStudents = useCallback(
@@ -87,17 +92,22 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
       setStudentsLoading(true);
       try {
-        const list = await adminApi().students();
+        const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
+        const list = await adminApi(token).students();
         setStudents(list);
         setStudentsLoaded(true);
         setError('');
       } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
         setError(err instanceof ApiError ? err.message : 'Failed to load students');
       } finally {
         setStudentsLoading(false);
       }
     },
-    [isAuthenticated, studentsLoaded]
+    [isAuthenticated, studentsLoaded, session]
   );
 
   const loadStaff = useCallback(
@@ -107,17 +117,22 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
       setStaffLoading(true);
       try {
-        const list = await adminApi().staff();
+        const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
+        const list = await adminApi(token).staff();
         setStaff(list);
         setStaffLoaded(true);
         setError('');
       } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
         setError(err instanceof ApiError ? err.message : 'Failed to load staff');
       } finally {
         setStaffLoading(false);
       }
     },
-    [isAuthenticated, staffLoaded]
+    [isAuthenticated, staffLoaded, session]
   );
 
   const value = useMemo(
