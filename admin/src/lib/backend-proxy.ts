@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const DEV_BACKEND_DEFAULT = 'http://127.0.0.1:8000';
-
 function isBlockedBackendUrl(url: string): boolean {
   try {
     const host = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
@@ -11,15 +9,10 @@ function isBlockedBackendUrl(url: string): boolean {
   }
 }
 
-/** Resolved at request time — never baked in at build. */
+/** Resolved at request time — never baked in at build. Requires BACKEND_API_URL in all environments. */
 export function resolveBackendUrl(): string | null {
   const explicit = process.env.BACKEND_API_URL?.trim().replace(/\/$/, '');
   if (explicit && !isBlockedBackendUrl(explicit)) return explicit;
-
-  if (process.env.NODE_ENV !== 'production') {
-    return DEV_BACKEND_DEFAULT;
-  }
-
   return null;
 }
 

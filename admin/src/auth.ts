@@ -2,7 +2,6 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { authConfig } from '@/auth.config';
 import { ApiError, apiLogin } from '@/lib/api';
-import { IS_PRODUCTION } from '@/lib/config';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -31,7 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           };
         } catch (err) {
           if (err instanceof ApiError && err.status === 401) return null;
-          if (!IS_PRODUCTION) {
+          if (process.env.NODE_ENV !== 'production') {
             console.error('[auth] Admin login failed:', err);
           }
           return null;

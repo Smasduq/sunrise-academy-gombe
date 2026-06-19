@@ -1,5 +1,3 @@
-const DEV_BACKEND_DEFAULT = 'http://127.0.0.1:8000';
-
 function isBlockedBackendUrl(url: string): boolean {
   try {
     const host = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
@@ -9,38 +7,31 @@ function isBlockedBackendUrl(url: string): boolean {
   }
 }
 
-/** FastAPI base URL. In production only BACKEND_API_URL is used (never API_URL). */
+/** FastAPI base URL from BACKEND_API_URL env var. Required in all environments. */
 export function getBackendUrl(): string | undefined {
   const explicit = process.env.BACKEND_API_URL?.trim().replace(/\/$/, '');
   if (explicit && !isBlockedBackendUrl(explicit)) return explicit;
-
-  if (process.env.NODE_ENV === 'production') {
-    return undefined;
-  }
-
-  return DEV_BACKEND_DEFAULT;
+  return undefined;
 }
 
 /** Base URL for fetch(). Browser uses same-origin proxy; server calls FastAPI directly. */
 export function getApiUrl(): string {
-  const backend = getBackendUrl();
-
   if (typeof window !== 'undefined') {
-    return process.env.NODE_ENV === 'production' || backend ? '' : DEV_BACKEND_DEFAULT;
+    return '';
   }
 
-  return backend ?? DEV_BACKEND_DEFAULT;
+  const backend = getBackendUrl();
+  if (!backend) {
+    throw new Error('BACKEND_API_URL must be set on server-side. Add it to environment variables.');
+  }
+  return backend;
 }
 
-export const IS_PRODUCTION = process.env.NODE_ENV === 'production';
-
 export function assertBackendConfigured(): void {
-  // Browser calls same-origin /api/* proxy routes; BACKEND_API_URL is only required server-side.
+  // Browser calls same-origin /api/* proxy routes; BACKEND_API_URL is required server-side.
   if (typeof window !== 'undefined') return;
 
-  if (IS_PRODUCTION && !getBackendUrl()) {
-    throw new Error(
-      'BACKEND_API_URL must be set on Vercel to your FastAPI server URL. Remove API_URL from Vercel env vars — Vercel may overwrite it with your deployment URL.',
-    );
+  if (!getBackendUrl()) {
+    throw new Error('BACKEND_API_URL must be set in environment variables.');
   }
 }
