@@ -1,4 +1,4 @@
-"""Seed the SQLite database with demo school data."""
+"""Seed the database with demo school data."""
 
 from datetime import date, datetime, timezone
 

@@ -68,7 +68,7 @@ export default function Navbar() {
                 width={44}
                 height={44}
                 className={styles.logoImg}
-                style={{ borderRadius: '4px', objectFit: 'contain' }}
+                style={{ width: '100%', height: '100%', borderRadius: '4px', objectFit: 'contain' }}
               />
             </div>
             <div className={styles.logoText}>
@@ -100,7 +100,7 @@ export default function Navbar() {
               aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               title={darkMode ? 'Light mode' : 'Dark mode'}
             >
-              {darkMode ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+              {darkMode ? <SunIcon className={styles.actionIcon} /> : <MoonIcon className={styles.actionIcon} />}
             </button>
 
             <Link href="/admissions" className={`btn btn-primary ${styles.applyBtn}`}>

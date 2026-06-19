@@ -15,7 +15,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    database_url: str = f"sqlite:///{BASE_DIR / 'data' / 'school.db'}"
+    database_url: str = "postgresql://postgres:password@localhost:5432/postgres"
     secret_key: str = ""
     access_token_expire_minutes: int = 60 * 24
     cors_origins: str = "http://127.0.0.1:3000,http://localhost:3000,http://127.0.0.1:3001,http://localhost:3001"
