@@ -46,6 +46,13 @@ from app.student_promotion import next_class_name
 router = APIRouter(prefix="/admin/students", tags=["admin-students"])
 
 
+def _as_utc(dt: datetime) -> datetime:
+    """Normalize DB timestamps for safe comparison (SQLite naive vs Postgres aware)."""
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 def _get_student_or_404(db: Session, student_id: str) -> Student:
     student = (
         db.query(Student)
@@ -80,11 +87,7 @@ def student_stats(
     )
     archived = sum(1 for s in students if s.is_archived)
     new_this_term = sum(
-        1
-        for s in students
-        if s.created_at
-        and (s.created_at.replace(tzinfo=timezone.utc) if s.created_at.tzinfo is None else s.created_at)
-        >= term_start
+        1 for s in students if s.created_at and _as_utc(s.created_at) >= term_start
     )
     return StudentStatsOut(
         total=len(students),
