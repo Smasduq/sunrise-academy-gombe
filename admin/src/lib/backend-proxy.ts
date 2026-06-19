@@ -26,6 +26,7 @@ export function resolveBackendUrl(): string | null {
 export async function proxyToBackend(
   request: NextRequest,
   backendPath: string,
+  options?: { accessToken?: string | null },
 ): Promise<NextResponse> {
   const backend = resolveBackendUrl();
   if (!backend) {
@@ -42,6 +43,10 @@ export async function proxyToBackend(
   const headers = new Headers(request.headers);
   headers.delete('host');
   headers.delete('connection');
+
+  if (options?.accessToken) {
+    headers.set('Authorization', `Bearer ${options.accessToken}`);
+  }
 
   const init: RequestInit & { duplex?: 'half' } = {
     method: request.method,
@@ -68,11 +73,14 @@ export async function proxyToBackend(
 
 type RouteContext = { params: Promise<{ path?: string[] }> };
 
-export function createProxyHandlers(apiPrefix: string) {
+type AccessTokenResolver = () => Promise<string | null | undefined>;
+
+export function createProxyHandlers(apiPrefix: string, resolveAccessToken?: AccessTokenResolver) {
   async function handler(request: NextRequest, context: RouteContext) {
     const { path } = await context.params;
     const suffix = path?.length ? `/${path.join('/')}` : '';
-    return proxyToBackend(request, `${apiPrefix}${suffix}`);
+    const accessToken = resolveAccessToken ? await resolveAccessToken() : undefined;
+    return proxyToBackend(request, `${apiPrefix}${suffix}`, { accessToken });
   }
 
   return {

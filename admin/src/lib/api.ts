@@ -291,7 +291,7 @@ export interface DashboardOverview {
   announcements: AnnouncementRecord[];
 }
 
-export function adminApi(token: string) {
+export function adminApi(token?: string) {
   return {
     stats: () => apiFetch<AdminStats>('/api/admin/stats', { token }),
     dashboard: () => apiFetch<DashboardOverview>('/api/admin/dashboard', { token }),

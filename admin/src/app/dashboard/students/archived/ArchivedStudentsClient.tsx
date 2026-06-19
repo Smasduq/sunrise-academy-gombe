@@ -13,8 +13,8 @@ import crud from '@/components/crud.module.css';
 import styles from '@/components/students/students.module.css';
 
 export function ArchivedStudentsClient() {
-  const { data: session } = useSession();
-  const token = session?.accessToken ?? '';
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
   const { classes, loadClasses, setStudents } = useAdminData();
 
   const [archived, setArchived] = useState<StudentRecord[]>([]);
@@ -31,14 +31,14 @@ export function ArchivedStudentsClient() {
   }, []);
 
   const loadArchived = useCallback(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     setLoading(true);
-    adminApi(token)
+    adminApi()
       .archivedStudents()
       .then(setArchived)
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load'))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     loadClasses();
@@ -46,10 +46,10 @@ export function ArchivedStudentsClient() {
   }, [loadClasses, loadArchived]);
 
   async function handleRestore(student: StudentRecord) {
-    if (!token) return;
+    if (!isAuthenticated) return;
     setRestoringId(student.id);
     try {
-      const res = await adminApi(token).restoreStudent(student.id);
+      const res = await adminApi().restoreStudent(student.id);
       setArchived((prev) => prev.filter((s) => s.id !== student.id));
       setStudents((prev) => [...prev, res.student]);
       flash(`${fullName(student)} restored.`);
@@ -130,7 +130,6 @@ export function ArchivedStudentsClient() {
 
       {editStudent && (
         <EditStudentModal
-          token={token}
           student={editStudent}
           classes={classes}
           open
@@ -144,7 +143,6 @@ export function ArchivedStudentsClient() {
 
       {promoteId && (
         <PromoteModal
-          token={token}
           studentIds={[promoteId]}
           onClose={() => setPromoteId(null)}
           onDone={() => {

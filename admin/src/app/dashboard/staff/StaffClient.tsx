@@ -30,8 +30,8 @@ const EMPTY_FORM = {
 };
 
 export function StaffClient() {
-  const { data: session } = useSession();
-  const token = session?.accessToken ?? '';
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
 
   const {
     staff,
@@ -101,11 +101,11 @@ export function StaffClient() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!token) return;
+    if (!isAuthenticated) return;
     setSaving(true);
     setError('');
 
-    const api = adminApi(token);
+    const api = adminApi();
     const body: Record<string, unknown> = {
       staff_id: form.staff_id.trim(),
       first_name: form.first_name.trim(),
@@ -143,11 +143,11 @@ export function StaffClient() {
   }
 
   async function handleDelete(member: StaffRecord) {
-    if (!token) return;
+    if (!isAuthenticated) return;
     if (!confirm(`Delete ${member.first_name} ${member.last_name}? This cannot be undone.`)) return;
 
     try {
-      await adminApi(token).deleteStaff(member.id);
+      await adminApi().deleteStaff(member.id);
       setStaff((prev) => prev.filter((m) => m.id !== member.id));
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'Delete failed');

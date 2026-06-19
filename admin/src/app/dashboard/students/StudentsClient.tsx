@@ -110,8 +110,8 @@ function ActionsMenu({
 }
 
 export function StudentsClient() {
-  const { data: session } = useSession();
-  const token = session?.accessToken ?? '';
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
 
   const {
     students,
@@ -158,21 +158,21 @@ export function StudentsClient() {
   }, [loadClasses, loadStudents]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     setStatsLoading(true);
-    adminApi(token)
+    adminApi()
       .studentStats()
       .then(setStats)
       .catch(() => setStats(null))
       .finally(() => setStatsLoading(false));
 
-    adminApi(token)
+    adminApi()
       .activityLogs()
       .then((logs) =>
         setActivities(logs.filter((l) => l.entity_type === 'student').slice(0, 8))
       )
       .catch(() => setActivities([]));
-  }, [token, students.length]);
+  }, [isAuthenticated, students.length]);
 
   const localStats = useMemo(() => computeStats(students), [students]);
   const displayStats = stats ?? {
@@ -238,8 +238,8 @@ export function StudentsClient() {
   }
 
   async function handlePrintCard(student: StudentRecord) {
-    if (!token) return;
-    const settings = await adminApi(token).settings().catch(() => null);
+    if (!isAuthenticated) return;
+    const settings = await adminApi().settings().catch(() => null);
     openStudentIdCard(student, settings);
   }
 
@@ -252,9 +252,9 @@ export function StudentsClient() {
   }
 
   async function requestDelete(student: StudentRecord) {
-    if (!token) return;
+    if (!isAuthenticated) return;
     try {
-      const check = await adminApi(token).studentDeleteCheck(student.id);
+      const check = await adminApi().studentDeleteCheck(student.id);
       let message = `Delete ${fullName(student)}?\n\nThis is a soft delete — the record is hidden but not permanently removed from the database.`;
       if (check.has_records) {
         message += `\n\n⚠ This student has existing records:\n• ${check.results_count} result(s)\n• ${check.attendance_count} attendance record(s)\n• ${check.fee_count} fee record(s)\n\nConsider archiving instead if you want to preserve easy access.`;
@@ -266,16 +266,16 @@ export function StudentsClient() {
   }
 
   async function handleConfirm() {
-    if (!token || !pendingConfirm) return;
+    if (!isAuthenticated || !pendingConfirm) return;
     setConfirmLoading(true);
     const { type, student } = pendingConfirm;
     try {
       if (type === 'archive') {
-        await adminApi(token).archiveStudent(student.id);
+        await adminApi().archiveStudent(student.id);
         setStudents((prev) => prev.filter((s) => s.id !== student.id));
         flash('Student archived.');
       } else {
-        await adminApi(token).deleteStudent(student.id);
+        await adminApi().deleteStudent(student.id);
         setStudents((prev) => prev.filter((s) => s.id !== student.id));
         setSelected((prev) => {
           const next = new Set(prev);
@@ -293,9 +293,9 @@ export function StudentsClient() {
   }
 
   async function bulkArchive() {
-    if (!token || selected.size === 0) return;
+    if (!isAuthenticated || selected.size === 0) return;
     if (!confirm(`Archive ${selected.size} selected student(s)?`)) return;
-    const api = adminApi(token);
+    const api = adminApi();
     for (const id of selected) {
       try {
         await api.archiveStudent(id);
@@ -343,7 +343,7 @@ export function StudentsClient() {
             onClick={() => {
               loadClasses(true);
               loadStudents(true);
-              if (token) adminApi(token).studentStats().then(setStats).catch(() => null);
+              if (isAuthenticated) adminApi().studentStats().then(setStats).catch(() => null);
             }}
             disabled={studentsLoading}
           >
@@ -675,7 +675,6 @@ export function StudentsClient() {
 
       {promoteOpen && (
         <PromoteModal
-          token={token}
           studentIds={promoteIds}
           onClose={() => setPromoteOpen(false)}
           onDone={() => {
@@ -689,7 +688,6 @@ export function StudentsClient() {
       {editStudent && (
         <EditStudentModal
           key={editStudent.id}
-          token={token}
           student={editStudent}
           classes={classes}
           open

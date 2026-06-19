@@ -13,8 +13,8 @@ const TABS = [
 ];
 
 export function AdmissionsClient() {
-  const { data: session } = useSession();
-  const token = session?.accessToken ?? '';
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
   const [list, setList] = useState<AdmissionRecord[]>([]);
   const [tab, setTab] = useState('');
   const [loading, setLoading] = useState(true);
@@ -22,10 +22,10 @@ export function AdmissionsClient() {
   const [success, setSuccess] = useState('');
 
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     setLoading(true);
     try {
-      const data = await adminApi(token).admissions(tab || undefined);
+      const data = await adminApi().admissions(tab || undefined);
       setList(data);
       setError('');
     } catch (err) {
@@ -33,16 +33,16 @@ export function AdmissionsClient() {
     } finally {
       setLoading(false);
     }
-  }, [token, tab]);
+  }, [isAuthenticated, tab]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   async function updateStatus(id: string, status: string) {
-    if (!token) return;
+    if (!isAuthenticated) return;
     try {
-      const updated = await adminApi(token).updateAdmission(id, status);
+      const updated = await adminApi().updateAdmission(id, status);
       setList((prev) => prev.map((a) => (a.id === id ? updated : a)));
       setSuccess(`Application ${updated.application_no} marked as ${status.toLowerCase()}.`);
       setTimeout(() => setSuccess(''), 3000);

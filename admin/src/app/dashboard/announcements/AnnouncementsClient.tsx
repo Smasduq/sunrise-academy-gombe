@@ -8,8 +8,8 @@ import styles from '@/components/crud.module.css';
 const EMPTY = { title: '', content: '', audience: 'ALL', is_active: true };
 
 export function AnnouncementsClient() {
-  const { data: session } = useSession();
-  const token = session?.accessToken ?? '';
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
   const [list, setList] = useState<AnnouncementRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -19,16 +19,16 @@ export function AnnouncementsClient() {
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     setLoading(true);
     try {
-      setList(await adminApi(token).announcements());
+      setList(await adminApi().announcements());
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to load');
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     load();
@@ -55,10 +55,10 @@ export function AnnouncementsClient() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!token) return;
+    if (!isAuthenticated) return;
     setSaving(true);
     setError('');
-    const api = adminApi(token);
+    const api = adminApi();
     try {
       if (editing) {
         const updated = await api.updateAnnouncement(editing.id, form);
@@ -76,9 +76,9 @@ export function AnnouncementsClient() {
   }
 
   async function handleDelete(id: string) {
-    if (!token || !confirm('Delete this announcement?')) return;
+    if (!isAuthenticated || !confirm('Delete this announcement?')) return;
     try {
-      await adminApi(token).deleteAnnouncement(id);
+      await adminApi().deleteAnnouncement(id);
       setList((prev) => prev.filter((a) => a.id !== id));
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'Delete failed');

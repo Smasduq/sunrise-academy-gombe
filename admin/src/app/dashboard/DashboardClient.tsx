@@ -8,20 +8,20 @@ import crud from '@/components/crud.module.css';
 import dash from '@/components/dashboard.module.css';
 
 export function DashboardClient() {
-  const { data: session } = useSession();
-  const token = session?.accessToken ?? '';
+  const { status } = useSession();
   const [data, setData] = useState<DashboardOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!token) return;
-    adminApi(token)
+    if (status === 'loading') return;
+
+    adminApi()
       .dashboard()
       .then(setData)
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load dashboard'))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [status]);
 
   if (loading) {
     return <div className={crud.empty}>Loading dashboard…</div>;

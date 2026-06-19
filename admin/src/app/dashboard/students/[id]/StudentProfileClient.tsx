@@ -22,8 +22,8 @@ import crud from '@/components/crud.module.css';
 
 export function StudentProfileClient() {
   const { id } = useParams<{ id: string }>();
-  const { data: session } = useSession();
-  const token = session?.accessToken ?? '';
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
   const { classes, loadClasses } = useAdminData();
 
   const [profile, setProfile] = useState<StudentProfile | null>(null);
@@ -41,29 +41,29 @@ export function StudentProfileClient() {
   }, [loadClasses]);
 
   useEffect(() => {
-    if (!token || !id) return;
+    if (!isAuthenticated || !id) return;
 
     setLoading(true);
     setError('');
 
-    adminApi(token)
+    adminApi()
       .studentProfile(id)
       .then((data) => {
         setProfile(data);
-        adminApi(token).logStudentView(id).catch(() => null);
+        adminApi().logStudentView(id).catch(() => null);
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load profile'))
       .finally(() => setLoading(false));
-  }, [token, id]);
+  }, [isAuthenticated, id]);
 
   useEffect(() => {
-    if (!token || !id) return;
+    if (!isAuthenticated || !id) return;
 
     setLoadingExtras(true);
     Promise.all([
-      adminApi(token).studentResults(id),
-      adminApi(token).studentAttendance(id),
-      adminApi(token).settings(),
+      adminApi().studentResults(id),
+      adminApi().studentAttendance(id),
+      adminApi().settings(),
     ])
       .then(([r, a, s]) => {
         setResults(r);
@@ -76,23 +76,23 @@ export function StudentProfileClient() {
         setSettings(null);
       })
       .finally(() => setLoadingExtras(false));
-  }, [token, id]);
+  }, [isAuthenticated, id]);
 
   async function handlePrintCard() {
-    if (!profile || !token) return;
-    const schoolSettings = settings ?? (await adminApi(token).settings().catch(() => null));
+    if (!profile) return;
+    const schoolSettings = settings ?? (await adminApi().settings().catch(() => null));
     openStudentIdCard(profile.student, schoolSettings);
   }
 
   function refreshProfile() {
-    if (!token || !id) return;
-    adminApi(token)
+    if (!isAuthenticated || !id) return;
+    adminApi()
       .studentProfile(id)
       .then(setProfile)
       .catch(() => null);
     Promise.all([
-      adminApi(token).studentResults(id),
-      adminApi(token).studentAttendance(id),
+      adminApi().studentResults(id),
+      adminApi().studentAttendance(id),
     ])
       .then(([r, a]) => {
         setResults(r);
@@ -137,7 +137,6 @@ export function StudentProfileClient() {
 
       {promoteOpen && (
         <PromoteModal
-          token={token}
           studentIds={[student.id]}
           onClose={() => setPromoteOpen(false)}
           onDone={() => {
@@ -149,7 +148,6 @@ export function StudentProfileClient() {
 
       {editOpen && (
         <EditStudentModal
-          token={token}
           student={student}
           classes={classes}
           open

@@ -11,8 +11,8 @@ import styles from '@/components/students/students.module.css';
 
 export function StudentResultsClient() {
   const { id } = useParams<{ id: string }>();
-  const { data: session } = useSession();
-  const token = session?.accessToken ?? '';
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
 
   const [student, setStudent] = useState<StudentRecord | null>(null);
   const [data, setData] = useState<StudentResultsData | null>(null);
@@ -23,17 +23,17 @@ export function StudentResultsClient() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (!token || !id) return;
-    adminApi(token)
+    if (!isAuthenticated || !id) return;
+    adminApi()
       .studentProfile(id)
       .then((p) => setStudent(p.student))
       .catch(() => null);
-  }, [token, id]);
+  }, [isAuthenticated, id]);
 
   useEffect(() => {
-    if (!token || !id) return;
+    if (!isAuthenticated || !id) return;
     setLoading(true);
-    adminApi(token)
+    adminApi()
       .studentResults(id, {
         session_name: sessionFilter || undefined,
         term_name: termFilter || undefined,
@@ -42,14 +42,14 @@ export function StudentResultsClient() {
       .then(setData)
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load results'))
       .finally(() => setLoading(false));
-  }, [token, id, sessionFilter, termFilter, search]);
+  }, [isAuthenticated, id, sessionFilter, termFilter, search]);
 
   const currentTerm = useMemo(() => data?.results[0] ?? null, [data]);
 
   async function handleDownload(resultId: string) {
     const result = data?.results.find((r) => r.id === resultId);
-    if (!result || !student || !token) return;
-    const settings = await adminApi(token).settings().catch(() => null);
+    if (!result || !student) return;
+    const settings = await adminApi().settings().catch(() => null);
     printResultSlip(student, result, settings);
   }
 
@@ -62,8 +62,8 @@ export function StudentResultsClient() {
   }
 
   async function handlePrintCard() {
-    if (!student || !token) return;
-    const settings = await adminApi(token).settings().catch(() => null);
+    if (!student) return;
+    const settings = await adminApi().settings().catch(() => null);
     openStudentIdCard(student, settings);
   }
 

@@ -39,8 +39,7 @@ type AdminDataContextValue = {
 const AdminDataContext = createContext<AdminDataContextValue | null>(null);
 
 export function AdminDataProvider({ children }: { children: ReactNode }) {
-  const { data: session } = useSession();
-  const token = session?.accessToken ?? '';
+  const { status } = useSession();
 
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [staff, setStaff] = useState<StaffRecord[]>([]);
@@ -52,8 +51,10 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [staffLoading, setStaffLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const isAuthenticated = status === 'authenticated';
+
   useEffect(() => {
-    if (!token) {
+    if (!isAuthenticated) {
       setStudents([]);
       setStaff([]);
       setClasses([]);
@@ -61,32 +62,32 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       setStaffLoaded(false);
       setClassesLoaded(false);
     }
-  }, [token]);
+  }, [isAuthenticated]);
 
   const loadClasses = useCallback(
     async (force = false) => {
-      if (!token) return;
+      if (!isAuthenticated) return;
       if (classesLoaded && !force) return;
 
       try {
-        const list = await adminApi(token).classes();
+        const list = await adminApi().classes();
         setClasses(list);
         setClassesLoaded(true);
       } catch (err) {
         setError(err instanceof ApiError ? err.message : 'Failed to load classes');
       }
     },
-    [token, classesLoaded]
+    [isAuthenticated, classesLoaded]
   );
 
   const loadStudents = useCallback(
     async (force = false) => {
-      if (!token) return;
+      if (!isAuthenticated) return;
       if (studentsLoaded && !force) return;
 
       setStudentsLoading(true);
       try {
-        const list = await adminApi(token).students();
+        const list = await adminApi().students();
         setStudents(list);
         setStudentsLoaded(true);
         setError('');
@@ -96,17 +97,17 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         setStudentsLoading(false);
       }
     },
-    [token, studentsLoaded]
+    [isAuthenticated, studentsLoaded]
   );
 
   const loadStaff = useCallback(
     async (force = false) => {
-      if (!token) return;
+      if (!isAuthenticated) return;
       if (staffLoaded && !force) return;
 
       setStaffLoading(true);
       try {
-        const list = await adminApi(token).staff();
+        const list = await adminApi().staff();
         setStaff(list);
         setStaffLoaded(true);
         setError('');
@@ -116,7 +117,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         setStaffLoading(false);
       }
     },
-    [token, staffLoaded]
+    [isAuthenticated, staffLoaded]
   );
 
   const value = useMemo(

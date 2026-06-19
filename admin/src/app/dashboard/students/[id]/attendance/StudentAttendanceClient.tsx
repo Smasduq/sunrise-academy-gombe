@@ -86,8 +86,8 @@ function AttendanceCalendar({ records, month }: { records: StudentAttendanceData
 
 export function StudentAttendanceClient() {
   const { id } = useParams<{ id: string }>();
-  const { data: session } = useSession();
-  const token = session?.accessToken ?? '';
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
 
   const [student, setStudent] = useState<StudentRecord | null>(null);
   const [data, setData] = useState<StudentAttendanceData | null>(null);
@@ -98,17 +98,17 @@ export function StudentAttendanceClient() {
   const [termFilter, setTermFilter] = useState('');
 
   useEffect(() => {
-    if (!token || !id) return;
-    adminApi(token)
+    if (!isAuthenticated || !id) return;
+    adminApi()
       .studentProfile(id)
       .then((p) => setStudent(p.student))
       .catch(() => null);
-  }, [token, id]);
+  }, [isAuthenticated, id]);
 
   useEffect(() => {
-    if (!token || !id) return;
+    if (!isAuthenticated || !id) return;
     setLoading(true);
-    adminApi(token)
+    adminApi()
       .studentAttendance(id, {
         month,
         session_name: sessionFilter || undefined,
@@ -117,7 +117,7 @@ export function StudentAttendanceClient() {
       .then(setData)
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load attendance'))
       .finally(() => setLoading(false));
-  }, [token, id, month, sessionFilter, termFilter]);
+  }, [isAuthenticated, id, month, sessionFilter, termFilter]);
 
   if (loading && !data) {
     return <div className={crud.empty}>Loading attendance…</div>;
@@ -128,8 +128,8 @@ export function StudentAttendanceClient() {
   }
 
   async function handlePrintCard() {
-    if (!student || !token) return;
-    const settings = await adminApi(token).settings().catch(() => null);
+    if (!student) return;
+    const settings = await adminApi().settings().catch(() => null);
     openStudentIdCard(student, settings);
   }
 

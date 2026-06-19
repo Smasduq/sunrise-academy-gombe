@@ -6,14 +6,13 @@ import crud from '@/components/crud.module.css';
 import styles from './students.module.css';
 
 interface PromoteModalProps {
-  token: string;
   studentIds: string[];
   className?: string;
   onClose: () => void;
   onDone: () => void;
 }
 
-export function PromoteModal({ token, studentIds, className, onClose, onDone }: PromoteModalProps) {
+export function PromoteModal({ studentIds, className, onClose, onDone }: PromoteModalProps) {
   const [items, setItems] = useState<PromotePreviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [promoting, setPromoting] = useState(false);
@@ -21,24 +20,23 @@ export function PromoteModal({ token, studentIds, className, onClose, onDone }: 
   const [result, setResult] = useState<{ promoted: number; skipped: number } | null>(null);
 
   useEffect(() => {
-    if (!token) return;
     const body = studentIds.length
       ? { student_ids: studentIds }
       : className
         ? { class_name: className }
         : { student_ids: [] };
 
-    adminApi(token)
+    adminApi()
       .promotePreview(body)
       .then(setItems)
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Preview failed'))
       .finally(() => setLoading(false));
-  }, [token, studentIds, className]);
+  }, [studentIds, className]);
 
   const canPromote = items.some((i) => i.can_promote);
 
   async function handlePromote() {
-    if (!token || !canPromote) return;
+    if (!canPromote) return;
     setPromoting(true);
     setError('');
     const body = studentIds.length
@@ -48,7 +46,7 @@ export function PromoteModal({ token, studentIds, className, onClose, onDone }: 
         : { student_ids: studentIds };
 
     try {
-      const res = await adminApi(token).promoteStudents(body);
+      const res = await adminApi().promoteStudents(body);
       setResult({ promoted: res.promoted, skipped: res.skipped });
       setItems(res.items);
     } catch (err) {

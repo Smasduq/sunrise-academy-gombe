@@ -5,7 +5,6 @@ import { adminApi, ApiError, ClassOption, StudentRecord } from '@/lib/api';
 import crud from '@/components/crud.module.css';
 
 type EditStudentModalProps = {
-  token: string;
   student: StudentRecord;
   classes: ClassOption[];
   open: boolean;
@@ -14,7 +13,6 @@ type EditStudentModalProps = {
 };
 
 export function EditStudentModal({
-  token,
   student,
   classes,
   open,
@@ -46,11 +44,10 @@ export function EditStudentModal({
   if (!open) return null;
 
   async function handlePhoto(file: File) {
-    if (!token) return;
     setUploading(true);
     setError('');
     try {
-      const res = await adminApi(token).uploadImage(file, 'students');
+      const res = await adminApi().uploadImage(file, 'students');
       setForm((f) => ({ ...f, photo_url: res.url }));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Photo upload failed');
@@ -61,7 +58,6 @@ export function EditStudentModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!token) return;
     if (!form.first_name.trim() || !form.last_name.trim()) {
       setError('First and last name are required.');
       return;
@@ -90,7 +86,7 @@ export function EditStudentModal({
     if (form.password) body.password = form.password;
 
     try {
-      const updated = await adminApi(token).updateStudent(student.id, body);
+      const updated = await adminApi().updateStudent(student.id, body);
       onSaved(updated);
       onClose();
     } catch (err) {

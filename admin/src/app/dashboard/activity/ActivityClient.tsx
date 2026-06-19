@@ -6,20 +6,20 @@ import { ActivityLog, adminApi, ApiError } from '@/lib/api';
 import styles from '@/components/crud.module.css';
 
 export function ActivityClient() {
-  const { data: session } = useSession();
-  const token = session?.accessToken ?? '';
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!token) return;
-    adminApi(token)
+    if (!isAuthenticated) return;
+    adminApi()
       .activityLogs()
       .then(setLogs)
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load'))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [isAuthenticated]);
 
   return (
     <div className={styles.panel}>

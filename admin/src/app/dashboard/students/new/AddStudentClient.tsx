@@ -40,8 +40,8 @@ function randomPassword() {
 
 export function AddStudentClient() {
   const router = useRouter();
-  const { data: session } = useSession();
-  const token = session?.accessToken ?? '';
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
   const { classes, loadClasses, setStudents } = useAdminData();
 
   const [step, setStep] = useState(0);
@@ -55,19 +55,19 @@ export function AddStudentClient() {
   }, [loadClasses]);
 
   useEffect(() => {
-    if (!token) return;
-    adminApi(token)
+    if (!isAuthenticated) return;
+    adminApi()
       .settings()
       .then((s) => setForm((f) => ({ ...f, session: s.academic_session ?? '2025/2026' })))
       .catch(() => null);
-  }, [token]);
+  }, [isAuthenticated]);
 
   async function handlePhoto(file: File) {
-    if (!token) return;
+    if (!isAuthenticated) return;
     setUploading(true);
     setError('');
     try {
-      const res = await adminApi(token).uploadImage(file, 'students');
+      const res = await adminApi().uploadImage(file, 'students');
       setForm((f) => ({ ...f, photo_url: res.url }));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Photo upload failed');
@@ -110,7 +110,7 @@ export function AddStudentClient() {
   }
 
   async function handleSubmit() {
-    if (!token) return;
+    if (!isAuthenticated) return;
     if (!validateStep()) return;
 
     const password = form.password || randomPassword();
@@ -144,7 +144,7 @@ export function AddStudentClient() {
     };
 
     try {
-      const created = await adminApi(token).createStudent(body);
+      const created = await adminApi().createStudent(body);
       setStudents((prev) => [...prev, created]);
       router.push(`/dashboard/students/${created.id}`);
     } catch (err) {
