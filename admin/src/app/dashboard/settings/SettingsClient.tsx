@@ -6,9 +6,8 @@ import { adminApi, ApiError, SchoolSettings } from '@/lib/api';
 import styles from '@/components/crud.module.css';
 
 export function SettingsClient() {
-  const { status, data: session } = useSession();
+  const { status } = useSession();
   const isAuthenticated = status === 'authenticated';
-  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
   const [form, setForm] = useState<SchoolSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -17,7 +16,7 @@ export function SettingsClient() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    adminApi(token)
+    adminApi()
       .settings()
       .then(setForm)
       .catch((err) => {
@@ -36,7 +35,7 @@ export function SettingsClient() {
     setSaving(true);
     setError('');
     try {
-      const updated = await adminApi(token).updateSettings(form);
+      const updated = await adminApi().updateSettings(form);
       setForm(updated);
       setSuccess('Settings saved successfully.');
       setTimeout(() => setSuccess(''), 3000);

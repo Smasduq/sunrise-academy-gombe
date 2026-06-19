@@ -110,9 +110,8 @@ function ActionsMenu({
 }
 
 export function StudentsClient() {
-  const { status, data: session } = useSession();
+  const { status } = useSession();
   const isAuthenticated = status === 'authenticated';
-  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
 
   const {
     students,
@@ -161,7 +160,7 @@ export function StudentsClient() {
   useEffect(() => {
     if (!isAuthenticated) return;
     setStatsLoading(true);
-    adminApi(token)
+    adminApi()
       .studentStats()
       .then(setStats)
       .catch((err) => {
@@ -173,7 +172,7 @@ export function StudentsClient() {
       })
       .finally(() => setStatsLoading(false));
 
-    adminApi(token)
+    adminApi()
       .activityLogs()
       .then((logs) => setActivities(logs.filter((l) => l.entity_type === 'student').slice(0, 8)))
       .catch((err) => {
@@ -250,7 +249,7 @@ export function StudentsClient() {
 
   async function handlePrintCard(student: StudentRecord) {
     if (!isAuthenticated) return;
-    const settings = await adminApi(token).settings().catch((err) => {
+    const settings = await adminApi().settings().catch((err) => {
       if (err instanceof ApiError && err.status === 401) {
         window.location.href = '/login';
         return null;
@@ -271,7 +270,7 @@ export function StudentsClient() {
   async function requestDelete(student: StudentRecord) {
     if (!isAuthenticated) return;
     try {
-      const check = await adminApi(token).studentDeleteCheck(student.id);
+      const check = await adminApi().studentDeleteCheck(student.id);
       let message = `Delete ${fullName(student)}?\n\nThis is a soft delete — the record is hidden but not permanently removed from the database.`;
       if (check.has_records) {
         message += `\n\n⚠ This student has existing records:\n• ${check.results_count} result(s)\n• ${check.attendance_count} attendance record(s)\n• ${check.fee_count} fee record(s)\n\nConsider archiving instead if you want to preserve easy access.`;
@@ -288,11 +287,11 @@ export function StudentsClient() {
     const { type, student } = pendingConfirm;
     try {
       if (type === 'archive') {
-        await adminApi(token).archiveStudent(student.id);
+        await adminApi().archiveStudent(student.id);
         setStudents((prev) => prev.filter((s) => s.id !== student.id));
         flash('Student archived.');
       } else {
-        await adminApi(token).deleteStudent(student.id);
+        await adminApi().deleteStudent(student.id);
         setStudents((prev) => prev.filter((s) => s.id !== student.id));
         setSelected((prev) => {
           const next = new Set(prev);
@@ -312,7 +311,7 @@ export function StudentsClient() {
   async function bulkArchive() {
     if (!isAuthenticated || selected.size === 0) return;
     if (!confirm(`Archive ${selected.size} selected student(s)?`)) return;
-    const api = adminApi(token);
+    const api = adminApi();
     for (const id of selected) {
       try {
         await api.archiveStudent(id);
@@ -360,8 +359,8 @@ export function StudentsClient() {
             onClick={() => {
               loadClasses(true);
               loadStudents(true);
-              if (isAuthenticated)
-                adminApi(token)
+                if (isAuthenticated)
+                adminApi()
                   .studentStats()
                   .then(setStats)
                   .catch((err) => {

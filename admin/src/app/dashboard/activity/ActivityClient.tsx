@@ -6,16 +6,15 @@ import { ActivityLog, adminApi, ApiError } from '@/lib/api';
 import styles from '@/components/crud.module.css';
 
 export function ActivityClient() {
-  const { status, data: session } = useSession();
+  const { status } = useSession();
   const isAuthenticated = status === 'authenticated';
-  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    adminApi(token)
+    adminApi()
       .activityLogs()
       .then(setLogs)
       .catch((err) => {

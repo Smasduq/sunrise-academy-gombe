@@ -70,8 +70,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       if (classesLoaded && !force) return;
 
       try {
-        const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
-        const list = await adminApi(token).classes();
+        const list = await adminApi().classes();
         setClasses(list);
         setClassesLoaded(true);
       } catch (err) {
@@ -92,8 +91,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
       setStudentsLoading(true);
       try {
-        const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
-        const list = await adminApi(token).students();
+        const list = await adminApi().students();
         setStudents(list);
         setStudentsLoaded(true);
         setError('');
@@ -117,8 +115,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
       setStaffLoading(true);
       try {
-        const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
-        const list = await adminApi(token).staff();
+        const list = await adminApi().staff();
         setStaff(list);
         setStaffLoaded(true);
         setError('');

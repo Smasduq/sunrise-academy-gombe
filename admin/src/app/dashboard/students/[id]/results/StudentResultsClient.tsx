@@ -11,9 +11,8 @@ import styles from '@/components/students/students.module.css';
 
 export function StudentResultsClient() {
   const { id } = useParams<{ id: string }>();
-  const { status, data: session } = useSession();
+  const { status } = useSession();
   const isAuthenticated = status === 'authenticated';
-  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
 
   const [student, setStudent] = useState<StudentRecord | null>(null);
   const [data, setData] = useState<StudentResultsData | null>(null);
@@ -25,7 +24,7 @@ export function StudentResultsClient() {
 
   useEffect(() => {
     if (!isAuthenticated || !id) return;
-    adminApi(token)
+    adminApi()
       .studentProfile(id)
       .then((p) => setStudent(p.student))
       .catch((err) => {
@@ -38,7 +37,7 @@ export function StudentResultsClient() {
   useEffect(() => {
     if (!isAuthenticated || !id) return;
     setLoading(true);
-    adminApi(token)
+    adminApi()
       .studentResults(id, {
         session_name: sessionFilter || undefined,
         term_name: termFilter || undefined,
@@ -60,7 +59,7 @@ export function StudentResultsClient() {
   async function handleDownload(resultId: string) {
     const result = data?.results.find((r) => r.id === resultId);
     if (!result || !student) return;
-    const settings = await adminApi(token).settings().catch((err) => {
+    const settings = await adminApi().settings().catch((err) => {
       if (err instanceof ApiError && err.status === 401) {
         window.location.href = '/login';
         return null;
@@ -80,7 +79,7 @@ export function StudentResultsClient() {
 
   async function handlePrintCard() {
     if (!student) return;
-    const settings = await adminApi(token).settings().catch((err) => {
+    const settings = await adminApi().settings().catch((err) => {
       if (err instanceof ApiError && err.status === 401) {
         window.location.href = '/login';
         return null;

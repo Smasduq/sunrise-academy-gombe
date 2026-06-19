@@ -8,9 +8,8 @@ import styles from '@/components/crud.module.css';
 const EMPTY = { title: '', content: '', audience: 'ALL', is_active: true };
 
 export function AnnouncementsClient() {
-  const { status, data: session } = useSession();
+  const { status } = useSession();
   const isAuthenticated = status === 'authenticated';
-  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
   const [list, setList] = useState<AnnouncementRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -23,7 +22,7 @@ export function AnnouncementsClient() {
     if (!isAuthenticated) return;
     setLoading(true);
     try {
-      setList(await adminApi(token).announcements());
+      setList(await adminApi().announcements());
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         window.location.href = '/login';
@@ -63,7 +62,7 @@ export function AnnouncementsClient() {
     if (!isAuthenticated) return;
     setSaving(true);
     setError('');
-    const api = adminApi(token);
+    const api = adminApi();
     try {
       if (editing) {
         const updated = await api.updateAnnouncement(editing.id, form);
@@ -87,7 +86,7 @@ export function AnnouncementsClient() {
   async function handleDelete(id: string) {
     if (!isAuthenticated || !confirm('Delete this announcement?')) return;
     try {
-      await adminApi(token).deleteAnnouncement(id);
+      await adminApi().deleteAnnouncement(id);
       setList((prev) => prev.filter((a) => a.id !== id));
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {

@@ -22,9 +22,8 @@ import crud from '@/components/crud.module.css';
 
 export function StudentProfileClient() {
   const { id } = useParams<{ id: string }>();
-  const { status, data: session } = useSession();
+  const { status } = useSession();
   const isAuthenticated = status === 'authenticated';
-  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
   const { classes, loadClasses } = useAdminData();
 
   const [profile, setProfile] = useState<StudentProfile | null>(null);
@@ -47,11 +46,11 @@ export function StudentProfileClient() {
     setLoading(true);
     setError('');
 
-    adminApi(token)
+    adminApi()
       .studentProfile(id)
       .then((data) => {
         setProfile(data);
-        adminApi(token).logStudentView(id).catch(() => null);
+        adminApi().logStudentView(id).catch(() => null);
       })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) {
@@ -68,9 +67,9 @@ export function StudentProfileClient() {
 
     setLoadingExtras(true);
     Promise.all([
-      adminApi(token).studentResults(id),
-      adminApi(token).studentAttendance(id),
-      adminApi(token).settings(),
+      adminApi().studentResults(id),
+      adminApi().studentAttendance(id),
+      adminApi().settings(),
     ])
       .then(([r, a, s]) => {
         setResults(r);
@@ -91,7 +90,7 @@ export function StudentProfileClient() {
 
   async function handlePrintCard() {
     if (!profile) return;
-    const schoolSettings = settings ?? (await adminApi(token).settings().catch((err) => {
+    const schoolSettings = settings ?? (await adminApi().settings().catch((err) => {
       if (err instanceof ApiError && err.status === 401) {
         window.location.href = '/login';
         return null;
@@ -103,7 +102,7 @@ export function StudentProfileClient() {
 
   function refreshProfile() {
     if (!isAuthenticated || !id) return;
-    adminApi(token)
+    adminApi()
       .studentProfile(id)
       .then(setProfile)
       .catch((err) => {
@@ -112,8 +111,8 @@ export function StudentProfileClient() {
         }
       });
     Promise.all([
-      adminApi(token).studentResults(id),
-      adminApi(token).studentAttendance(id),
+      adminApi().studentResults(id),
+      adminApi().studentAttendance(id),
     ])
       .then(([r, a]) => {
         setResults(r);

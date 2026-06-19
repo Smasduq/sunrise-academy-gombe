@@ -13,12 +13,12 @@ export function DashboardClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
+  // client does not send token; server-side proxy attaches session token
 
   useEffect(() => {
     if (status === 'loading') return;
 
-    adminApi(token)
+    adminApi()
       .dashboard()
       .then(setData)
       .catch((err) => {
@@ -29,7 +29,7 @@ export function DashboardClient() {
         setError(err instanceof ApiError ? err.message : 'Failed to load dashboard');
       })
       .finally(() => setLoading(false));
-  }, [status, token]);
+  }, [status]);
 
   if (loading) {
     return <div className={crud.empty}>Loading dashboard…</div>;

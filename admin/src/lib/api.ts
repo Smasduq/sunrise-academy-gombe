@@ -1,4 +1,5 @@
-import { getApiUrl, assertBackendConfigured } from '@/lib/config';
+// Use same-origin proxy endpoints under /api/admin. Server-side proxy
+// handles attaching the access token, so client does not pass tokens.
 
 export class ApiError extends Error {
   status: number;
@@ -12,19 +13,13 @@ export class ApiError extends Error {
 type ApiOptions = RequestInit & { token?: string };
 
 export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
-  assertBackendConfigured();
-
   const { token, ...init } = options;
   const headers = new Headers(init.headers);
-
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
   if (init.body && !headers.has('Content-Type') && !(init.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
 
-  const res = await fetch(`${getApiUrl()}${path}`, { ...init, headers, cache: 'no-store' });
+  const res = await fetch(path, { ...init, headers, cache: 'no-store' });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText }));
@@ -295,48 +290,40 @@ export interface DashboardOverview {
   announcements: AnnouncementRecord[];
 }
 
-export function adminApi(token?: string) {
+export function adminApi() {
   return {
-    stats: () => apiFetch<AdminStats>('/api/admin/stats', { token }),
-    dashboard: () => apiFetch<DashboardOverview>('/api/admin/dashboard', { token }),
-    classes: () => apiFetch<ClassOption[]>('/api/admin/classes', { token }),
-    students: () => apiFetch<StudentRecord[]>('/api/admin/students', { token }),
-    studentStats: () => apiFetch<StudentStats>('/api/admin/students/stats', { token }),
-    studentProfile: (id: string) =>
-      apiFetch<StudentProfile>(`/api/admin/students/${id}/profile`, { token }),
+    stats: () => apiFetch<AdminStats>('/api/admin/stats'),
+    dashboard: () => apiFetch<DashboardOverview>('/api/admin/dashboard'),
+    classes: () => apiFetch<ClassOption[]>('/api/admin/classes'),
+    students: () => apiFetch<StudentRecord[]>('/api/admin/students'),
+    studentStats: () => apiFetch<StudentStats>('/api/admin/students/stats'),
+    studentProfile: (id: string) => apiFetch<StudentProfile>(`/api/admin/students/${id}/profile`),
     promotePreview: (body: { student_ids?: string[]; class_name?: string }) =>
       apiFetch<PromotePreviewItem[]>('/api/admin/students/promote/preview', {
         method: 'POST',
-        token,
         body: JSON.stringify(body),
       }),
     promoteStudents: (body: { student_ids?: string[]; class_name?: string }) =>
       apiFetch<PromoteResult>('/api/admin/students/promote', {
         method: 'POST',
-        token,
         body: JSON.stringify(body),
       }),
     archiveStudent: (id: string) =>
       apiFetch<{ message: string }>(`/api/admin/students/${id}/archive`, {
         method: 'POST',
-        token,
       }),
     restoreStudent: (id: string) =>
       apiFetch<{ message: string; student: StudentRecord }>(`/api/admin/students/${id}/restore`, {
         method: 'POST',
-        token,
       }),
-    archivedStudents: () => apiFetch<StudentRecord[]>('/api/admin/students/archived', { token }),
+    archivedStudents: () => apiFetch<StudentRecord[]>('/api/admin/students/archived'),
     studentAttendance: (id: string, params?: { month?: string; session_name?: string; term_name?: string }) => {
       const q = new URLSearchParams();
       if (params?.month) q.set('month', params.month);
       if (params?.session_name) q.set('session_name', params.session_name);
       if (params?.term_name) q.set('term_name', params.term_name);
       const qs = q.toString();
-      return apiFetch<StudentAttendanceData>(
-        `/api/admin/students/${id}/attendance${qs ? `?${qs}` : ''}`,
-        { token }
-      );
+      return apiFetch<StudentAttendanceData>(`/api/admin/students/${id}/attendance${qs ? `?${qs}` : ''}`);
     },
     studentResults: (id: string, params?: { session_name?: string; term_name?: string; search?: string }) => {
       const q = new URLSearchParams();
@@ -344,99 +331,66 @@ export function adminApi(token?: string) {
       if (params?.term_name) q.set('term_name', params.term_name);
       if (params?.search) q.set('search', params.search);
       const qs = q.toString();
-      return apiFetch<StudentResultsData>(
-        `/api/admin/students/${id}/results${qs ? `?${qs}` : ''}`,
-        { token }
-      );
+      return apiFetch<StudentResultsData>(`/api/admin/students/${id}/results${qs ? `?${qs}` : ''}`);
     },
-    studentDeleteCheck: (id: string) =>
-      apiFetch<StudentDeleteCheck>(`/api/admin/students/${id}/delete-check`, { token }),
-    studentPromotionHistory: (id: string) =>
-      apiFetch<PromotionHistoryItem[]>(`/api/admin/students/${id}/promotion-history`, { token }),
-    logStudentView: (id: string) =>
-      apiFetch<{ message: string }>(`/api/admin/students/${id}/view-log`, { method: 'POST', token }),
-    studentActivities: (id: string) =>
-      apiFetch<StudentActivityItem[]>(`/api/admin/students/${id}/activities`, { token }),
+    studentDeleteCheck: (id: string) => apiFetch<StudentDeleteCheck>(`/api/admin/students/${id}/delete-check`),
+    studentPromotionHistory: (id: string) => apiFetch<PromotionHistoryItem[]>(`/api/admin/students/${id}/promotion-history`),
+    logStudentView: (id: string) => apiFetch<{ message: string }>(`/api/admin/students/${id}/view-log`, { method: 'POST' }),
+    studentActivities: (id: string) => apiFetch<StudentActivityItem[]>(`/api/admin/students/${id}/activities`),
     uploadImage: (file: File, folder = 'students') => {
       const form = new FormData();
       form.append('file', file);
       form.append('folder', folder);
       return apiFetch<{ url: string; folder: string }>('/api/admin/uploads/image', {
         method: 'POST',
-        token,
         body: form,
       });
     },
     createStudent: (body: object) =>
       apiFetch<StudentRecord>('/api/admin/students', {
         method: 'POST',
-        token,
         body: JSON.stringify(body),
       }),
     updateStudent: (id: string, body: object) =>
       apiFetch<StudentRecord>(`/api/admin/students/${id}`, {
         method: 'PUT',
-        token,
         body: JSON.stringify(body),
       }),
-    deleteStudent: (id: string) =>
-      apiFetch<{ message: string }>(`/api/admin/students/${id}`, {
-        method: 'DELETE',
-        token,
-      }),
-    staff: () => apiFetch<StaffRecord[]>('/api/admin/staff', { token }),
+    deleteStudent: (id: string) => apiFetch<{ message: string }>(`/api/admin/students/${id}`, { method: 'DELETE' }),
+    staff: () => apiFetch<StaffRecord[]>('/api/admin/staff'),
     createStaff: (body: object) =>
       apiFetch<StaffRecord>('/api/admin/staff', {
         method: 'POST',
-        token,
         body: JSON.stringify(body),
       }),
     updateStaff: (id: string, body: object) =>
       apiFetch<StaffRecord>(`/api/admin/staff/${id}`, {
         method: 'PUT',
-        token,
         body: JSON.stringify(body),
       }),
-    deleteStaff: (id: string) =>
-      apiFetch<{ message: string }>(`/api/admin/staff/${id}`, {
-        method: 'DELETE',
-        token,
-      }),
-    admissions: (status?: string) =>
-      apiFetch<AdmissionRecord[]>(
-        `/api/admin/admissions${status ? `?status_filter=${status}` : ''}`,
-        { token }
-      ),
+    deleteStaff: (id: string) => apiFetch<{ message: string }>(`/api/admin/staff/${id}`, { method: 'DELETE' }),
+    admissions: (status?: string) => apiFetch<AdmissionRecord[]>(`/api/admin/admissions${status ? `?status_filter=${status}` : ''}`),
     updateAdmission: (id: string, status: string) =>
       apiFetch<AdmissionRecord>(`/api/admin/admissions/${id}`, {
         method: 'PUT',
-        token,
         body: JSON.stringify({ status }),
       }),
-    announcements: () => apiFetch<AnnouncementRecord[]>('/api/admin/announcements', { token }),
+    announcements: () => apiFetch<AnnouncementRecord[]>('/api/admin/announcements'),
     createAnnouncement: (body: object) =>
       apiFetch<AnnouncementRecord>('/api/admin/announcements', {
         method: 'POST',
-        token,
         body: JSON.stringify(body),
       }),
     updateAnnouncement: (id: string, body: object) =>
       apiFetch<AnnouncementRecord>(`/api/admin/announcements/${id}`, {
         method: 'PUT',
-        token,
         body: JSON.stringify(body),
       }),
-    deleteAnnouncement: (id: string) =>
-      apiFetch<{ message: string }>(`/api/admin/announcements/${id}`, {
-        method: 'DELETE',
-        token,
-      }),
-    activityLogs: () => apiFetch<ActivityLog[]>('/api/admin/activity-logs', { token }),
-    settings: () => apiFetch<SchoolSettings>('/api/admin/settings', { token }),
-    updateSettings: (body: object) =>
-      apiFetch<SchoolSettings>('/api/admin/settings', {
+    deleteAnnouncement: (id: string) => apiFetch<{ message: string }>(`/api/admin/announcements/${id}`, { method: 'DELETE' }),
+    activityLogs: () => apiFetch<ActivityLog[]>('/api/admin/activity-logs'),
+    settings: () => apiFetch<SchoolSettings>('/api/admin/settings'),
+    updateSettings: (body: object) => apiFetch<SchoolSettings>('/api/admin/settings', {
         method: 'PUT',
-        token,
         body: JSON.stringify(body),
       }),
   };

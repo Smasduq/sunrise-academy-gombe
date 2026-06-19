@@ -19,7 +19,7 @@ export function PromoteModal({ studentIds, className, onClose, onDone }: Promote
   const [promoting, setPromoting] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ promoted: number; skipped: number } | null>(null);
-  const { status, data: session } = useSession();
+  const { status } = useSession();
 
   useEffect(() => {
     const body = studentIds.length
@@ -27,8 +27,7 @@ export function PromoteModal({ studentIds, className, onClose, onDone }: Promote
       : className
         ? { class_name: className }
         : { student_ids: [] };
-    const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
-    adminApi(token)
+    adminApi()
       .promotePreview(body)
       .then(setItems)
       .catch((err) => {
@@ -54,8 +53,7 @@ export function PromoteModal({ studentIds, className, onClose, onDone }: Promote
         : { student_ids: studentIds };
 
     try {
-      const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
-      const res = await adminApi(token).promoteStudents(body);
+      const res = await adminApi().promoteStudents(body);
       setResult({ promoted: res.promoted, skipped: res.skipped });
       setItems(res.items);
     } catch (err) {

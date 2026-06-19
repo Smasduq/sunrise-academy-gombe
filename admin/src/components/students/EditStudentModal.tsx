@@ -41,8 +41,7 @@ export function EditStudentModal({
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const { status, data: session } = useSession();
-  const token = session?.accessToken ?? (session as any)?.access_token ?? undefined;
+  const { status } = useSession();
 
   if (!open) return null;
 
@@ -50,7 +49,7 @@ export function EditStudentModal({
     setUploading(true);
     setError('');
     try {
-      const res = await adminApi(token).uploadImage(file, 'students');
+      const res = await adminApi().uploadImage(file, 'students');
       setForm((f) => ({ ...f, photo_url: res.url }));
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -93,7 +92,7 @@ export function EditStudentModal({
     if (form.password) body.password = form.password;
 
     try {
-      const updated = await adminApi(token).updateStudent(student.id, body);
+      const updated = await adminApi().updateStudent(student.id, body);
       onSaved(updated);
       onClose();
     } catch (err) {
