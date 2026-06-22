@@ -65,13 +65,18 @@ export async function proxyToBackend(
 
 type RouteContext = { params: Promise<{ path?: string[] }> };
 
-type AccessTokenResolver = () => Promise<string | null | undefined>;
+type AccessTokenResolver = (request: NextRequest) => Promise<string | null | undefined>;
 
 export function createProxyHandlers(apiPrefix: string, resolveAccessToken?: AccessTokenResolver) {
   async function handler(request: NextRequest, context: RouteContext) {
     const { path } = await context.params;
     const suffix = path?.length ? `/${path.join('/')}` : '';
-    const accessToken = resolveAccessToken ? await resolveAccessToken() : undefined;
+    const accessToken = resolveAccessToken ? await resolveAccessToken(request) : undefined;
+
+    if (resolveAccessToken && !accessToken) {
+      return NextResponse.json({ detail: 'Not authenticated' }, { status: 401 });
+    }
+
     return proxyToBackend(request, `${apiPrefix}${suffix}`, { accessToken });
   }
 

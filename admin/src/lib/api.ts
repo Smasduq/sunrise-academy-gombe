@@ -1,6 +1,8 @@
 // Use same-origin proxy endpoints under /api/admin. Server-side proxy
 // handles attaching the access token, so client does not pass tokens.
 
+import { getApiUrl } from '@/lib/config';
+
 export class ApiError extends Error {
   status: number;
 
@@ -48,7 +50,13 @@ export interface LoginResponse {
 }
 
 export async function apiLogin(email: string, password: string): Promise<LoginResponse> {
-  return apiFetch<LoginResponse>('/api/auth/admin/login', {
+  // NextAuth authorize() runs on the server — relative URLs fail there.
+  const url =
+    typeof window !== 'undefined'
+      ? '/api/auth/admin/login'
+      : `${getApiUrl()}/api/auth/admin/login`;
+
+  return apiFetch<LoginResponse>(url, {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
