@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 
 from app.models import Assignment, Attendance, Class, ClassSubject, Result, StaffClass, Student
 
-# name, level, section
+# Must stay in sync with PROMOTION_MAP in app/student_promotion.py.
+# Primary 3 is the final class — it has no next entry in that map.
 SCHOOL_CLASSES: list[tuple[str, str, str | None]] = [
     ("Nursery 1", "Nursery", None),
     ("Nursery 2", "Nursery", None),

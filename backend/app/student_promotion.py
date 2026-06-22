@@ -1,5 +1,7 @@
 """Student class promotion rules for Sunrise Academy Gombe."""
 
+# Must stay in sync with SCHOOL_CLASSES in app/school_classes.py.
+# Primary 3 is intentionally the final class — no next entry in this map.
 PROMOTION_MAP: dict[str, str] = {
     "Nursery 1": "Nursery 2",
     "Nursery 2": "Primary 1",
