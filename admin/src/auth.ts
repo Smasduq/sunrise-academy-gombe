@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { authConfig } from '@/auth.config';
-import { ApiError, apiLogin } from '@/lib/api';
+import { ServerApiError, serverApiLogin } from '@/lib/server-auth-api';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -17,7 +17,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!email || !password) return null;
 
         try {
-          const data = await apiLogin(email.trim(), password);
+          const data = await serverApiLogin(email.trim(), password);
 
           return {
             id: data.user_id,
@@ -29,7 +29,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             accessToken: data.access_token,
           };
         } catch (err) {
-          if (err instanceof ApiError && err.status === 401) return null;
+          if (err instanceof ServerApiError && err.status === 401) return null;
           if (process.env.NODE_ENV !== 'production') {
             console.error('[auth] Admin login failed:', err);
           }

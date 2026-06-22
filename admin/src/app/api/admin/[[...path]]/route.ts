@@ -2,6 +2,9 @@ import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
 import { createProxyHandlers } from '@/lib/backend-proxy';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 async function adminAccessToken(request: NextRequest) {
   const token = await getToken({
     req: request,

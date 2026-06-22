@@ -1,8 +1,7 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { authConfig } from '@/auth.config';
-import { ApiError, apiLogin } from '@/lib/api';
-import { IS_PRODUCTION } from '@/lib/config';
+import { ServerApiError, serverApiLogin } from '@/lib/server-auth-api';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -20,7 +19,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!admissionNumber || !password) return null;
 
         try {
-          const data = await apiLogin('student', {
+          const data = await serverApiLogin('student', {
             admission_number: admissionNumber.trim(),
             password,
           });
@@ -35,8 +34,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             accessToken: data.access_token,
           };
         } catch (err) {
-          if (err instanceof ApiError && err.status === 401) return null;
-          if (!IS_PRODUCTION) {
+          if (err instanceof ServerApiError && err.status === 401) return null;
+          if (process.env.NODE_ENV !== 'production') {
             console.error('[auth] Student login failed:', err);
           }
           return null;
@@ -56,7 +55,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!staffId || !password) return null;
 
         try {
-          const data = await apiLogin('staff', {
+          const data = await serverApiLogin('staff', {
             staff_id: staffId.trim(),
             password,
           });
@@ -71,8 +70,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             accessToken: data.access_token,
           };
         } catch (err) {
-          if (err instanceof ApiError && err.status === 401) return null;
-          if (!IS_PRODUCTION) {
+          if (err instanceof ServerApiError && err.status === 401) return null;
+          if (process.env.NODE_ENV !== 'production') {
             console.error('[auth] Staff login failed:', err);
           }
           return null;

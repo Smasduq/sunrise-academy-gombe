@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { resolveBackendUrl } from '@/lib/config';
+import { diagnoseBackendConfig, resolveBackendUrl } from '@/lib/server-backend-config';
 
 export { resolveBackendUrl };
 
@@ -7,17 +7,19 @@ export async function proxyToBackend(
   request: NextRequest,
   backendPath: string,
 ): Promise<NextResponse> {
-  const backend = resolveBackendUrl();
-  if (!backend) {
+  const diagnostic = diagnoseBackendConfig();
+  if (!diagnostic.ok) {
     return NextResponse.json(
       {
-        detail: 'BACKEND_API_URL is not set. Add your FastAPI URL in environment variables.',
+        detail: diagnostic.hint,
+        issue: diagnostic.issue,
+        configured_host: diagnostic.configuredHost ?? null,
       },
       { status: 503 },
     );
   }
 
-  const url = `${backend}${backendPath}${request.nextUrl.search}`;
+  const url = `${diagnostic.baseUrl}${backendPath}${request.nextUrl.search}`;
   const headers = new Headers(request.headers);
   headers.delete('host');
   headers.delete('connection');
@@ -37,6 +39,7 @@ export async function proxyToBackend(
   const responseHeaders = new Headers(res.headers);
   responseHeaders.delete('content-encoding');
   responseHeaders.delete('transfer-encoding');
+  responseHeaders.set('X-Proxy-Backend-Host', diagnostic.host);
 
   return new NextResponse(res.body, {
     status: res.status,

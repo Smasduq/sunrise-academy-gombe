@@ -14,6 +14,15 @@ export class ApiError extends Error {
 
 type ApiOptions = RequestInit & { token?: string };
 
+async function resolveRequestUrl(path: string): Promise<string> {
+  if (typeof window !== 'undefined') {
+    return resolveApiPath(path);
+  }
+
+  const { buildBackendRequestUrl } = await import('@/lib/server-backend-config');
+  return buildBackendRequestUrl(path);
+}
+
 export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { token, ...init } = options;
   const headers = new Headers(init.headers);
@@ -21,7 +30,7 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
     headers.set('Content-Type', 'application/json');
   }
 
-  const res = await fetch(resolveApiPath(path), { ...init, headers, cache: 'no-store' });
+  const res = await fetch(await resolveRequestUrl(path), { ...init, headers, cache: 'no-store' });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText }));
@@ -47,13 +56,6 @@ export interface LoginResponse {
   display_name: string;
   identifier: string;
   profile_id: string;
-}
-
-export async function apiLogin(email: string, password: string): Promise<LoginResponse> {
-  return apiFetch<LoginResponse>('/api/auth/admin/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  });
 }
 
 export interface ClassOption {

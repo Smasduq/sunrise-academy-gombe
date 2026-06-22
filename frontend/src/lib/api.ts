@@ -1,4 +1,4 @@
-import { assertBackendConfigured, resolveApiPath } from '@/lib/config';
+import { resolveApiPath } from '@/lib/config';
 
 export class ApiError extends Error {
   status: number;
@@ -11,9 +11,16 @@ export class ApiError extends Error {
 
 type ApiOptions = RequestInit & { token?: string };
 
-export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
-  assertBackendConfigured();
+async function resolveRequestUrl(path: string): Promise<string> {
+  if (typeof window !== 'undefined') {
+    return resolveApiPath(path);
+  }
 
+  const { buildBackendRequestUrl } = await import('@/lib/server-backend-config');
+  return buildBackendRequestUrl(path);
+}
+
+export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { token, ...init } = options;
   const headers = new Headers(init.headers);
 
@@ -24,7 +31,7 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
     headers.set('Content-Type', 'application/json');
   }
 
-  const res = await fetch(resolveApiPath(path), { ...init, headers, cache: 'no-store' });
+  const res = await fetch(await resolveRequestUrl(path), { ...init, headers, cache: 'no-store' });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText }));
@@ -39,19 +46,9 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
   return res.json() as Promise<T>;
 }
 
-export async function apiLogin(
-  role: 'student' | 'staff',
-  body: Record<string, string>
-): Promise<LoginResponse> {
-  return apiFetch<LoginResponse>(`/api/auth/${role}/login`, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  });
-}
-
 export async function checkBackendHealth(): Promise<boolean> {
   try {
-    const res = await fetch(resolveApiPath('/api/health'), { cache: 'no-store' });
+    const res = await fetch(await resolveRequestUrl('/api/health'), { cache: 'no-store' });
     return res.ok;
   } catch {
     return false;
