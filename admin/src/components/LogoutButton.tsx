@@ -1,11 +1,18 @@
 'use client';
 
 import { signOut } from 'next-auth/react';
-import styles from './admin-shell.module.css';
 
-export function LogoutButton() {
+type LogoutButtonProps = {
+  className?: string;
+};
+
+export function LogoutButton({ className }: LogoutButtonProps) {
   return (
-    <button type="button" className={styles.logoutBtn} onClick={() => signOut({ callbackUrl: '/login' })}>
+    <button
+      type="button"
+      className={className}
+      onClick={() => signOut({ callbackUrl: '/login' })}
+    >
       Sign Out
     </button>
   );

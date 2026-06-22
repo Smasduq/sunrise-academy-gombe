@@ -126,7 +126,7 @@ export function AdminShell({ displayName, email, children }: Props) {
               <p className={styles.pageSubtitle}>Nursery & Primary Administration</p>
             </div>
           </div>
-          <LogoutButton />
+          <LogoutButton className={styles.logoutBtn} />
         </header>
         <main className={styles.content}>{children}</main>
       </div>
