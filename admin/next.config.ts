@@ -1,4 +1,7 @@
 import type { NextConfig } from 'next';
+import { loadEnvConfig } from '@next/env';
+
+loadEnvConfig(process.cwd());
 
 function parseAllowedDevOrigins(): string[] {
   const raw = process.env.ALLOWED_DEV_ORIGINS;

@@ -1,7 +1,7 @@
 // Use same-origin proxy endpoints under /api/admin. Server-side proxy
 // handles attaching the access token, so client does not pass tokens.
 
-import { getApiUrl } from '@/lib/config';
+import { resolveApiPath } from '@/lib/config';
 
 export class ApiError extends Error {
   status: number;
@@ -21,7 +21,7 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
     headers.set('Content-Type', 'application/json');
   }
 
-  const res = await fetch(path, { ...init, headers, cache: 'no-store' });
+  const res = await fetch(resolveApiPath(path), { ...init, headers, cache: 'no-store' });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText }));
@@ -50,13 +50,7 @@ export interface LoginResponse {
 }
 
 export async function apiLogin(email: string, password: string): Promise<LoginResponse> {
-  // NextAuth authorize() runs on the server — relative URLs fail there.
-  const url =
-    typeof window !== 'undefined'
-      ? '/api/auth/admin/login'
-      : `${getApiUrl()}/api/auth/admin/login`;
-
-  return apiFetch<LoginResponse>(url, {
+  return apiFetch<LoginResponse>('/api/auth/admin/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });

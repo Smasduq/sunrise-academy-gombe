@@ -9,7 +9,7 @@ function isBlockedBackendUrl(url: string): boolean {
   }
 }
 
-/** FastAPI base URL. In production only BACKEND_API_URL is used (never API_URL). */
+/** FastAPI base URL from BACKEND_API_URL. Local dev falls back to 127.0.0.1:8000. */
 export function getBackendUrl(): string | undefined {
   const explicit = process.env.BACKEND_API_URL?.trim().replace(/\/$/, '');
   if (explicit && !isBlockedBackendUrl(explicit)) return explicit;
@@ -21,26 +21,39 @@ export function getBackendUrl(): string | undefined {
   return DEV_BACKEND_DEFAULT;
 }
 
-/** Base URL for fetch(). Browser uses same-origin proxy; server calls FastAPI directly. */
-export function getApiUrl(): string {
+/** Used by runtime API route proxies. */
+export function resolveBackendUrl(): string | null {
+  return getBackendUrl() ?? null;
+}
+
+/** Server-side direct calls to FastAPI (login, SSR). */
+export function getServerBackendUrl(): string {
   const backend = getBackendUrl();
-
-  if (typeof window !== 'undefined') {
-    return process.env.NODE_ENV === 'production' || backend ? '' : DEV_BACKEND_DEFAULT;
+  if (!backend) {
+    throw new Error(
+      'BACKEND_API_URL must be set in production to your FastAPI host (e.g. Railway or Render).',
+    );
   }
+  return backend;
+}
 
-  return backend ?? DEV_BACKEND_DEFAULT;
+/** Browser → same-origin /api/* proxy. Server → BACKEND_API_URL. */
+export function resolveApiPath(path: string): string {
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  if (typeof window !== 'undefined') {
+    return path;
+  }
+  return `${getServerBackendUrl()}${path}`;
 }
 
 export const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 export function assertBackendConfigured(): void {
-  // Browser calls same-origin /api/* proxy routes; BACKEND_API_URL is only required server-side.
   if (typeof window !== 'undefined') return;
 
-  if (IS_PRODUCTION && !getBackendUrl()) {
-    throw new Error(
-      'BACKEND_API_URL must be set on Vercel to your FastAPI server URL. Remove API_URL from Vercel env vars — Vercel may overwrite it with your deployment URL.',
-    );
+  if (IS_PRODUCTION && !process.env.BACKEND_API_URL?.trim()) {
+    throw new Error('BACKEND_API_URL must be set in production.');
   }
 }

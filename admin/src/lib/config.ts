@@ -1,3 +1,5 @@
+const DEV_BACKEND_DEFAULT = 'http://127.0.0.1:8000';
+
 function isBlockedBackendUrl(url: string): boolean {
   try {
     const host = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
@@ -7,31 +9,49 @@ function isBlockedBackendUrl(url: string): boolean {
   }
 }
 
-/** FastAPI base URL from BACKEND_API_URL env var. Required in all environments. */
+/** FastAPI base URL from BACKEND_API_URL. Local dev falls back to 127.0.0.1:8000. */
 export function getBackendUrl(): string | undefined {
   const explicit = process.env.BACKEND_API_URL?.trim().replace(/\/$/, '');
   if (explicit && !isBlockedBackendUrl(explicit)) return explicit;
-  return undefined;
-}
 
-/** Base URL for fetch(). Browser uses same-origin proxy; server calls FastAPI directly. */
-export function getApiUrl(): string {
-  if (typeof window !== 'undefined') {
-    return '';
+  if (process.env.NODE_ENV === 'production') {
+    return undefined;
   }
 
+  return DEV_BACKEND_DEFAULT;
+}
+
+/** Used by runtime API route proxies. */
+export function resolveBackendUrl(): string | null {
+  return getBackendUrl() ?? null;
+}
+
+/** Server-side direct calls to FastAPI (login, SSR). */
+export function getServerBackendUrl(): string {
   const backend = getBackendUrl();
   if (!backend) {
-    throw new Error('BACKEND_API_URL must be set on server-side. Add it to environment variables.');
+    throw new Error(
+      'BACKEND_API_URL must be set in production to your FastAPI host (e.g. Railway or Render).',
+    );
   }
   return backend;
 }
 
+/** Browser → same-origin /api/* proxy. Server → BACKEND_API_URL. */
+export function resolveApiPath(path: string): string {
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  if (typeof window !== 'undefined') {
+    return path;
+  }
+  return `${getServerBackendUrl()}${path}`;
+}
+
 export function assertBackendConfigured(): void {
-  // Browser calls same-origin /api/* proxy routes; BACKEND_API_URL is required server-side.
   if (typeof window !== 'undefined') return;
 
-  if (!getBackendUrl()) {
-    throw new Error('BACKEND_API_URL must be set in environment variables.');
+  if (process.env.NODE_ENV === 'production' && !process.env.BACKEND_API_URL?.trim()) {
+    throw new Error('BACKEND_API_URL must be set in production.');
   }
 }

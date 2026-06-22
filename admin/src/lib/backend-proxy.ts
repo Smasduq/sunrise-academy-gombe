@@ -1,20 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { resolveBackendUrl } from '@/lib/config';
 
-function isBlockedBackendUrl(url: string): boolean {
-  try {
-    const host = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
-    return host.endsWith('.vercel.app') || host.endsWith('.vercel.sh');
-  } catch {
-    return false;
-  }
-}
-
-/** Resolved at request time — never baked in at build. Requires BACKEND_API_URL in all environments. */
-export function resolveBackendUrl(): string | null {
-  const explicit = process.env.BACKEND_API_URL?.trim().replace(/\/$/, '');
-  if (explicit && !isBlockedBackendUrl(explicit)) return explicit;
-  return null;
-}
+export { resolveBackendUrl };
 
 export async function proxyToBackend(
   request: NextRequest,
@@ -25,7 +12,7 @@ export async function proxyToBackend(
   if (!backend) {
     return NextResponse.json(
       {
-        detail: 'BACKEND_API_URL is not set. Add it in Vercel env vars.',
+        detail: 'BACKEND_API_URL is not set. Add your FastAPI URL in environment variables.',
       },
       { status: 503 },
     );
