@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
@@ -64,7 +64,7 @@ class ResultOut(BaseModel):
 
 class AttendanceOut(BaseModel):
     id: str
-    date: datetime
+    date: date
     status: AttendanceStatus
     remark: str | None
 
