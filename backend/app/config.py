@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://postgres:password@localhost:5432/postgres"
     secret_key: str = ""
     access_token_expire_minutes: int = 60 * 24
-    cors_origins: str = "http://127.0.0.1:3000,http://localhost:3000,http://127.0.0.1:3001,http://localhost:3001"
+    cors_origins: str = ""
     hf_token: str = ""
     hf_bucket_id: str = ""  # e.g. your-username/sunrise-academy-gombe
 
@@ -37,5 +37,8 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-if os.getenv("ENVIRONMENT", "").lower() == "production" and not settings.cors_origin_list:
-    raise RuntimeError("CORS_ORIGINS is required when ENVIRONMENT=production.")
+if os.getenv("ENVIRONMENT", "").lower() == "production" and not settings.cors_origins.strip():
+    raise RuntimeError(
+        "CORS_ORIGINS must be set when ENVIRONMENT=production "
+        "(e.g. your Vercel frontend and admin URLs)."
+    )
