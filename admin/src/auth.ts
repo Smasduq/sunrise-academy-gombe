@@ -30,9 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           };
         } catch (err) {
           if (err instanceof ServerApiError && err.status === 401) return null;
-          if (process.env.NODE_ENV !== 'production') {
-            console.error('[auth] Admin login failed:', err);
-          }
+          console.error('[auth] Admin login failed:', err);
           return null;
         }
       },
