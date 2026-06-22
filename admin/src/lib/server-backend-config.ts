@@ -14,7 +14,8 @@ function readEnv(name: 'BACKEND_API_URL' | 'API_URL'): string | undefined {
 function hostnameFromUrl(url: string): string | null {
   try {
     return new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
-  } catch {
+  } catch (e) {
+    console.error('[config] Could not parse BACKEND_API_URL:', url, e);
     return null;
   }
 }
