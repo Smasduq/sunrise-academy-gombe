@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { adminApi, ApiError, StaffRecord } from '@/lib/api';
 import { useAdminData } from '@/components/AdminDataProvider';
+import { ConfirmDialog } from '@/components/students/ConfirmDialog';
 import styles from '@/components/crud.module.css';
 
 const POSITIONS = [
@@ -53,6 +54,9 @@ export function StaffClient() {
   const [deptFilter, setDeptFilter] = useState('');
   const [profile, setProfile] = useState<StaffRecord | null>(null);
   const [success, setSuccess] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     loadClasses();
@@ -146,19 +150,30 @@ export function StaffClient() {
     }
   }
 
-  async function handleDelete(member: StaffRecord) {
+  function handleDelete(member: StaffRecord) {
     if (!isAuthenticated) return;
-    if (!confirm(`Delete ${member.first_name} ${member.last_name}? This cannot be undone.`)) return;
+    setPendingDeleteId(member.id);
+    setConfirmOpen(true);
+  }
 
+  async function handleConfirmDelete() {
+    if (!isAuthenticated || !pendingDeleteId) return;
+    setDeleteLoading(true);
     try {
-      await adminApi().deleteStaff(member.id);
-      setStaff((prev) => prev.filter((m) => m.id !== member.id));
+      await adminApi().deleteStaff(pendingDeleteId);
+      setStaff((prev) => prev.filter((m) => m.id !== pendingDeleteId));
+      setSuccess('Staff deleted.');
+      setTimeout(() => setSuccess(''), 3000);
+      setConfirmOpen(false);
+      setPendingDeleteId(null);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         window.location.href = '/login';
         return;
       }
       alert(err instanceof ApiError ? err.message : 'Delete failed');
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -472,6 +487,25 @@ export function StaffClient() {
           </aside>
         </>
       )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete staff member"
+        message={(() => {
+          const member = staff.find((m) => m.id === pendingDeleteId);
+          return member
+            ? `Delete ${member.first_name} ${member.last_name}? This cannot be undone.`
+            : 'Delete this staff member? This cannot be undone.';
+        })()}
+        confirmLabel="Delete staff"
+        danger
+        loading={deleteLoading}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setPendingDeleteId(null);
+        }}
+      />
     </div>
   );
 }
