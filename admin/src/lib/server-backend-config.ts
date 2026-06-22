@@ -6,7 +6,7 @@ export type BackendConfigDiagnostic =
   | { ok: true; baseUrl: string; host: string }
   | { ok: false; issue: BackendConfigIssue; hint: string; configuredHost?: string };
 
-function readEnv(name: 'BACKEND_API_URL' | 'API_URL'): string | undefined {
+function readEnv(name: 'FASTAPI_URL' | 'API_URL'): string | undefined {
   const value = process.env[name];
   return typeof value === 'string' ? value.trim().replace(/\/$/, '') : undefined;
 }
@@ -15,7 +15,7 @@ function hostnameFromUrl(url: string): string | null {
   try {
     return new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
   } catch (e) {
-    console.error('[config] Could not parse BACKEND_API_URL:', url, e);
+    console.error('[config] Could not parse FASTAPI_URL:', url, e);
     return null;
   }
 }
@@ -26,14 +26,14 @@ function isBlockedBackendHost(host: string): boolean {
 
 /** Runtime-only backend URL resolution (never import from client components). */
 export function diagnoseBackendConfig(): BackendConfigDiagnostic {
-  const explicit = readEnv('BACKEND_API_URL');
+  const explicit = readEnv('FASTAPI_URL');
   if (explicit) {
     const host = hostnameFromUrl(explicit);
     if (!host) {
       return {
         ok: false,
         issue: 'invalid',
-        hint: 'BACKEND_API_URL is not a valid URL.',
+        hint: 'FASTAPI_URL is not a valid URL.',
       };
     }
     if (isBlockedBackendHost(host)) {
@@ -42,7 +42,7 @@ export function diagnoseBackendConfig(): BackendConfigDiagnostic {
         issue: 'blocked_vercel',
         configuredHost: host,
         hint:
-          'BACKEND_API_URL must be your FastAPI host (Railway, Render, etc.), not a Vercel deployment URL. Set it in Vercel → Settings → Environment Variables.',
+          'FASTAPI_URL must be your FastAPI host (Railway, Render, etc.), not a Vercel deployment URL. Set it in Vercel → Settings → Environment Variables.',
       };
     }
     return { ok: true, baseUrl: explicit, host };
@@ -57,7 +57,7 @@ export function diagnoseBackendConfig(): BackendConfigDiagnostic {
         issue: 'blocked_vercel',
         configuredHost: legacyHost,
         hint:
-          'Vercel auto-set API_URL to this deployment. Delete API_URL on Vercel and set BACKEND_API_URL to your FastAPI URL instead. Local .env files are not used on Vercel.',
+          'Vercel auto-set API_URL to this deployment. Delete API_URL on Vercel and set FASTAPI_URL to your FastAPI URL instead. Local .env files are not used on Vercel.',
       };
     }
   }
@@ -70,17 +70,17 @@ export function diagnoseBackendConfig(): BackendConfigDiagnostic {
     ok: false,
     issue: 'missing',
     hint:
-      'BACKEND_API_URL is not set for this deployment. Add it in Vercel → Settings → Environment Variables (Production). Local .env is not deployed.',
+      'FASTAPI_URL is not set for this deployment. Add it in Vercel → Settings → Environment Variables (Production). Local .env is not deployed.',
   };
 }
 
 export function getBackendUrl(): string | null {
-  const explicit = readEnv('BACKEND_API_URL');
+  const explicit = readEnv('FASTAPI_URL');
   if (explicit) {
     const host = hostnameFromUrl(explicit);
     if (host && isBlockedBackendHost(host)) {
       throw new Error(
-        `BACKEND_API_URL "${explicit}" looks like a Vercel deployment URL. ` +
+        `FASTAPI_URL "${explicit}" looks like a Vercel deployment URL. ` +
           `Set it to your FastAPI backend URL (e.g. your Render or Railway URL).`,
       );
     }
