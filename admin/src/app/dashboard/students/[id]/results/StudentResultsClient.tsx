@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { adminApi, ApiError, StudentRecord, StudentResultsData } from '@/lib/api';
+import { adminApi, ApiError, SchoolSettings, StudentRecord, StudentResultsData } from '@/lib/api';
 import { printResultSlip, openStudentIdCard } from '@/components/students/studentCard';
 import { StudentProfileShell } from '@/components/students/StudentProfileShell';
 import crud from '@/components/crud.module.css';
@@ -21,6 +21,7 @@ export function StudentResultsClient() {
   const [sessionFilter, setSessionFilter] = useState('');
   const [termFilter, setTermFilter] = useState('');
   const [search, setSearch] = useState('');
+  const settingsRef = useRef<SchoolSettings | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !id) return;
@@ -33,6 +34,18 @@ export function StudentResultsClient() {
         }
       });
   }, [isAuthenticated, id]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    adminApi()
+      .settings()
+      .then((s) => {
+        settingsRef.current = s;
+      })
+      .catch(() => {
+        // non-critical — card/slip will render without school branding
+      });
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated || !id) return;
@@ -59,14 +72,7 @@ export function StudentResultsClient() {
   async function handleDownload(resultId: string) {
     const result = data?.results.find((r) => r.id === resultId);
     if (!result || !student) return;
-    const settings = await adminApi().settings().catch((err) => {
-      if (err instanceof ApiError && err.status === 401) {
-        window.location.href = '/login';
-        return null;
-      }
-      return null;
-    });
-    printResultSlip(student, result, settings);
+    printResultSlip(student, result, settingsRef.current);
   }
 
   if (loading && !data) {
@@ -77,16 +83,9 @@ export function StudentResultsClient() {
     return <div className={crud.formError}>{error}</div>;
   }
 
-  async function handlePrintCard() {
+  function handlePrintCard() {
     if (!student) return;
-    const settings = await adminApi().settings().catch((err) => {
-      if (err instanceof ApiError && err.status === 401) {
-        window.location.href = '/login';
-        return null;
-      }
-      return null;
-    });
-    openStudentIdCard(student, settings);
+    openStudentIdCard(student, settingsRef.current);
   }
 
   return (
