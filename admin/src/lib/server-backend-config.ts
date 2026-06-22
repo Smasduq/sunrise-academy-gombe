@@ -74,6 +74,16 @@ export function diagnoseBackendConfig(): BackendConfigDiagnostic {
 }
 
 export function getBackendUrl(): string | null {
+  const explicit = readEnv('BACKEND_API_URL');
+  if (explicit) {
+    const host = hostnameFromUrl(explicit);
+    if (host && isBlockedBackendHost(host)) {
+      throw new Error(
+        `BACKEND_API_URL "${explicit}" looks like a Vercel deployment URL. ` +
+          `Set it to your FastAPI backend URL (e.g. your Render or Railway URL).`,
+      );
+    }
+  }
   const diagnostic = diagnoseBackendConfig();
   return diagnostic.ok ? diagnostic.baseUrl : null;
 }
