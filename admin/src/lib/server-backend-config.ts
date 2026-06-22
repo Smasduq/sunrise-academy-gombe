@@ -73,19 +73,20 @@ export function diagnoseBackendConfig(): BackendConfigDiagnostic {
   };
 }
 
-export function resolveBackendUrl(): string | null {
+export function getBackendUrl(): string | null {
   const diagnostic = diagnoseBackendConfig();
   return diagnostic.ok ? diagnostic.baseUrl : null;
 }
 
 export function getServerBackendUrl(): string {
-  const diagnostic = diagnoseBackendConfig();
-  if (!diagnostic.ok) {
-    throw new Error(diagnostic.hint);
+  const url = getBackendUrl();
+  if (!url) {
+    const diagnostic = diagnoseBackendConfig();
+    throw new Error(!diagnostic.ok ? diagnostic.hint : 'Backend URL is unavailable.');
   }
-  return diagnostic.baseUrl;
+  return url;
 }
 
 export function buildBackendRequestUrl(path: string): string {
-  return `${getServerBackendUrl()}${path}`;
+  return `${getBackendUrl() ?? getServerBackendUrl()}${path}`;
 }

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { diagnoseBackendConfig, resolveBackendUrl } from '@/lib/server-backend-config';
-
-export { resolveBackendUrl };
+import { diagnoseBackendConfig } from '@/lib/server-backend-config';
 
 export async function proxyToBackend(
   request: NextRequest,
