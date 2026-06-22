@@ -94,7 +94,7 @@ def get_stats(
     db: Annotated[Session, Depends(get_db)],
 ):
     return AdminStatsOut(
-        students=db.query(Student).count(),
+        students=db.query(Student).filter(Student.is_deleted.is_(False)).count(),
         staff=db.query(Staff).count(),
         classes=len(sort_school_classes(db.query(Class).all())),
     )
