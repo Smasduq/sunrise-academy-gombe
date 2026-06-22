@@ -338,16 +338,16 @@ def create_staff(
     if db.query(Staff).filter(Staff.staff_id == payload.staff_id.upper()).first():
         raise HTTPException(status_code=400, detail="Staff ID already exists")
 
-    user = User(
+    staff_user = User(
         password_hash=hash_password(payload.password),
         role=Role.STAFF,
         status=payload.status,
     )
-    db.add(user)
+    db.add(staff_user)
     db.flush()
 
     staff = Staff(
-        user_id=user.id,
+        user_id=staff_user.id,
         staff_id=payload.staff_id.upper(),
         first_name=payload.first_name,
         last_name=payload.last_name,
